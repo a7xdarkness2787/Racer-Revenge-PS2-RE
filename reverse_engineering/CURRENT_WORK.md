@@ -2,27 +2,33 @@
 
 ## Active target
 
-Recover visible geometry and connect it to the collision/world structures already mapped.
+Decode the PSG payload beyond its now-verified hierarchy and material tables, then correlate visible geometry with collision and pod/track structures.
 
 ## Latest development
 
-Collision data is now structurally reproducible across the complete embedded retail corpus.
+The fixed part of the retail PSG format is now reproducible across all 9,917 embedded PSG files.
 
-All 2,505 `.col` resources pass the current parser. The common header, all three serialized collision types, the binary BVH representation, triangle leaves and type-2 two-point leaves are documented.
+The verified top-level layout is:
 
-A full-corpus correction also identified the exact BVH metric:
+- `psg\0`
+- version 3
+- object count
+- `object_count * 0xe0` hierarchy descriptors
+- material count
+- `material_count * 0x40` material names
+- PS2-specific geometry payload
 
-`8 * max(hx, 0.005) * max(hy, 0.005) * max(hz, 0.005)`
+The corpus contains 17,942 object descriptors and 22,175 material-name records.
 
-This formula passes all 222,577 observed nodes. The high bit in each u16 child reference selects a leaf; unflagged values index internal nodes.
+Each object descriptor contains a 0x80-byte name, 4x4 affine matrix, two vec3 fields, a radius-like float and a parent index. Every PSG has exactly one root, parent links are valid and acyclic, and the maximum observed hierarchy depth is 7.
 
-Executable agreement is now address-backed:
+Executable confirmation:
 
-- COL header validation near `0x0011b920`
-- type dispatcher `0x00124f80`
-- type-0 reader `0x00125890`
-- type-1 reader `0x00126450`
-- type-2 reader `0x00126640`
+- geometry create/format path around `0x0026e820`
+- object hierarchy reader `0x0028cac0`
+- material-name reader `0x0026e640`
+
+The hierarchy reader performs the same 0x80/0x40/0x0c/0x0c/0x04/0x04 serialized reads independently observed in the files and then builds parent/child/sibling links from the parent indices.
 
 ## Current evidence files
 
@@ -30,23 +36,22 @@ Executable agreement is now address-backed:
 - `formats/PHY.md`
 - `formats/SPL.md`
 - `formats/COL.md`
+- `formats/PSG.md`
 - `executable/resource_loader.md`
 - `executable/pod_track_loaders.md`
 - `executable/collision_loader.md`
-- `scripts/res_inspect.py`
-- `scripts/phy_inspect.py`
-- `scripts/spl_inspect.py`
-- `scripts/col_inspect.py`
-- dated records under `reverse_engineering/records/`
+- `executable/surface_geometry_loader.md`
+- format inspection scripts under `reverse_engineering/scripts/`
+- dated evidence records under `reverse_engineering/records/`
 
 ## Next targets
 
-1. Recover the `.psg` geometry descriptor table and payload boundaries across the 9,917 embedded PSG resources.
-2. Tie PSG loading to the `PSXSurfaceGeometry` / `SurfaceGeometry` executable code and identify mesh/material references.
-3. Decode the s16 collision-vertex scale path used by 11 static collision bodies.
-4. Correlate visible PSG bounds with matching COL bounds for a pod component and a track object.
-5. Trace TunnelTrack branches and collision objects into checkpoint/progress and AI decisions.
-6. Start retained PCSX2 runtime captures once geometry/collision object addresses are stable.
+1. Determine the first PSG payload record structure and how payload records are assigned to hierarchy objects.
+2. Identify material indices and VIF/VU/GIF/DMA boundaries in the payload.
+3. Correlate one pod PSG object's transform/bounds with its matching COL component.
+4. Decode the s16 collision-vertex dequantization path used by 11 static collision bodies.
+5. Trace TunnelTrack branch/collision data into checkpoint, progress and AI decisions.
+6. Start retained PCSX2 runtime captures once geometry object addresses are stable.
 
 ## Evidence rule
 
