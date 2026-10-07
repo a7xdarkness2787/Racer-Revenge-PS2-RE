@@ -1,0 +1,35 @@
+# Original game media
+*.iso
+*.bin
+*.cue
+
+# PS2 executables/modules
+SLUS_*
+SLES_*
+SCES_*
+*.elf
+*.irx
+*.img
+
+# Extracted retail resources/assets
+*.res
+*.vag
+*.pss
+
+# Large analysis bundles
+*.tar
+*.zip
+*.7z
+
+# Ghidra projects
+*.gpr
+*.rep/
+*.lock
+
+# Temporary/output files
+tmp/
+temp/
+build/
+extracted/
+retail/
+game_files/
