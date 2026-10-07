@@ -5,57 +5,54 @@ Last evidence update: 2026-10-07
 
 ## Overall
 
-Estimated overall research maturity: **about 16%**
+Estimated overall research maturity: **about 21%**
 
-This percentage measures progress toward a documented, reproducible understanding of the North American retail PS2 game. It is not a playable-game percentage and is not a claim that 16% of the machine code has been semantically recovered.
+This percentage measures progress toward a documented, reproducible understanding of the North American retail PS2 game. It is not a playable-game percentage and is not a claim that 21% of the machine code has been semantically recovered.
 
-The current increase is driven by three concrete advances: the complete outer `.RES` parser, an address-backed pod physics/configuration map, and an address-backed `TunnelTrack` spline graph map.
+The current increase is driven by complete outer RES parsing plus address-backed PHY, SPL and COL format/loader work.
 
 | Area | Weight | Current evidence score | Notes |
 | --- | ---: | ---: | --- |
-| Input identity and corpus inventory | 5% | 80% | Retail image identity and complete extracted manifests are available; full local re-hash remains a separate clean-run gate |
-| Executable, platform and object system | 10% | 20% | Resource loader, pod configuration loader and TunnelTrack loader are now address-backed |
-| Containers and asset formats | 15% | 30% | 103/103 outer RES files pass; PHY and SPL families are now structurally documented |
-| Tracks, world and collision | 15% | 12% | 26 SPL graphs validated and runtime node layout/flags mapped; geometry/collision formats remain open |
-| Vehicle physics, boost and damage | 15% | 12% | 23 PHY files parsed; many runtime field offsets mapped; upgrade selection/equations remain open |
-| Race logic, AI and progression | 10% | 3% | SPL branch graph and AI/race-control node markers exposed; higher-level behavior still open |
-| Renderer, textures and effects | 15% | 0% | PSG/PSM/PST/VU/GS behavior not yet mapped |
-| Camera, audio, UI and save behavior | 5% | 8% | Readable CAM/INI/JUK families and inventory evidence; code behavior still mostly open |
+| Input identity and corpus inventory | 5% | 80% | Retail identity and extracted manifests are available |
+| Executable, platform and object system | 10% | 25% | Resource, pod config, TunnelTrack and collision loaders are address-backed |
+| Containers and asset formats | 15% | 45% | RES, PHY, SPL and all three serialized COL types documented with reproducible parsers |
+| Tracks, world and collision | 15% | 25% | Track graph mapped; 2,505 collision resources parse; geometry/render formats still open |
+| Vehicle physics, boost and damage | 15% | 17% | PHY runtime offsets plus pod collision families now exposed; equations/upgrade selection remain open |
+| Race logic, AI and progression | 10% | 3% | SPL graph and authored AI/race flags exposed; higher-level behavior remains open |
+| Renderer, textures and effects | 15% | 0% | PSG/PSM/PST/VIF/VU/GS behavior not yet mapped |
+| Camera, audio, UI and save behavior | 5% | 8% | CAM/INI/JUK families inventoried; code behavior mostly open |
 | Differential runtime validation | 7% | 0% | No retained PCSX2 runtime capture yet |
-| Reproducibility and closure | 3% | 25% | RES, PHY and SPL inspection tooling and dated evidence records are now retained |
+| Reproducibility and closure | 3% | 35% | RES, PHY, SPL and COL tools plus dated evidence records are retained |
 
-Weighted total from this rubric is approximately **15.6%**, rounded to **16%**.
+Weighted total from this rubric is approximately **21.3%**, rounded to **21%**.
 
 ## Latest verified developments
 
 ### Resource containers
 
-The retail `.RES` outer format is structurally reproducible across all 103 extracted containers:
-
-- 34,128 logical resource directory records
-- 44,861 zlib chunks
-- every chunk expands to `0x6000` bytes
-- every compressed chunk is followed by `0xff`
-- no overlapping resource ranges
-- no unexplained trailing bytes
+All 103 retail `.RES` containers parse under the recovered version-3 layout, exposing 34,128 logical resources and 44,861 zlib chunks.
 
 ### Pod physics
 
-All 23 retail pod `.phy` configurations parse as INI-style text. The executable routine beginning at `0x002146c0` directly consumes the same section/key names and provides a first runtime field map for gravity, repulsor, pod-animation, steering and damage/repair data.
+All 23 retail pod `.phy` configurations parse. The loader beginning at `0x002146c0` maps authored physics/control/damage values into stable runtime offsets.
 
-The consolidated `UI/PODPHYS.RES` copies still match the matching pod-local `.phy` resources 23/23 byte-for-byte.
+### Track graph
 
-### Track graphs
+All 26 retail `.spl` resources parse, containing 4,999 nodes and 5,108 explicit edges. The `TunnelTrack` loader at `0x002a1260..0x002a1d70` establishes a 0x80-byte runtime node and the packed routing/AI flag byte.
 
-All 26 retail `.spl` resources parse successfully:
+### Collision
 
-- 4,999 nodes
-- 5,108 directed edges
-- 103 branch nodes
+All **2,505** embedded `.col` resources now parse exactly:
 
-The `TunnelTrack` loader at `0x002a1260..0x002a1d70` uses 0x80-byte runtime node records and packs eight authored routing/AI markers into a flags byte at node `+0x79`.
+- 2,292 type-0 static triangle trees
+- 9 type-1 compound static trees
+- 204 type-2 two-point trees
 
-See `formats/RES.md`, `formats/PHY.md`, `formats/SPL.md`, `executable/resource_loader.md`, and `executable/pod_track_loaders.md`.
+The corpus contains 222,577 verified BVH nodes. Their first float is the AABB volume after clamping each half-extent to a minimum of 0.005. Child bit 15 distinguishes leaves from internal nodes.
+
+The executable validates the COL magic/tag/version and dispatches at `0x00124f80` to readers at `0x00125890`, `0x00126450`, and `0x00126640`.
+
+See `formats/RES.md`, `formats/PHY.md`, `formats/SPL.md`, `formats/COL.md` and the matching executable/record notes.
 
 ## Confirmed disc-level dataset counts
 
@@ -70,4 +67,4 @@ See `formats/RES.md`, `formats/PHY.md`, `formats/SPL.md`, `executable/resource_l
 - 2 `.LSI`
 - 2 `.JUB`
 
-These are disc-level counts. The recovered RES directories expose tens of thousands of additional embedded resources and should not be mixed with the disc-file count.
+Disc-level counts must not be mixed with the much larger embedded-resource counts recovered from RES directories.
