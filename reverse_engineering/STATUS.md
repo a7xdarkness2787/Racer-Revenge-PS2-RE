@@ -5,40 +5,57 @@ Last evidence update: 2026-10-07
 
 ## Overall
 
-Estimated overall research maturity: **about 11%**
+Estimated overall research maturity: **about 16%**
 
-This percentage measures progress toward a documented, reproducible understanding of the North American retail PS2 game. It is not a playable-game percentage and is not a claim that 11% of the machine code has been semantically recovered.
+This percentage measures progress toward a documented, reproducible understanding of the North American retail PS2 game. It is not a playable-game percentage and is not a claim that 16% of the machine code has been semantically recovered.
 
-The increase from the initial baseline is driven mainly by a complete structural pass over the outer `.RES` corpus and an address-backed resource-loader anchor in `SLUS_202.68`.
+The current increase is driven by three concrete advances: the complete outer `.RES` parser, an address-backed pod physics/configuration map, and an address-backed `TunnelTrack` spline graph map.
 
 | Area | Weight | Current evidence score | Notes |
 | --- | ---: | ---: | --- |
 | Input identity and corpus inventory | 5% | 80% | Retail image identity and complete extracted manifests are available; full local re-hash remains a separate clean-run gate |
-| Executable, platform and object system | 10% | 15% | ELF layout fixed; `LoadResourceFile` routine strongly anchored at `0x0012cea0..0x0012dca0`; broader object/runtime map remains open |
-| Containers and asset formats | 15% | 25% | 103/103 outer RES files pass the recovered v3 parser; embedded formats are mostly not decoded yet |
-| Tracks, world and collision | 15% | 3% | TA/TB internal resource inventories are now reconstructable; geometry/collision semantics remain open |
-| Vehicle physics, boost and damage | 15% | 4% | 23 physics resources reconstruct; consolidated and pod-local `.phy` copies match 23/23; equations and runtime state remain open |
-| Race logic, AI and progression | 10% | 1% | Names and resource evidence only |
-| Renderer, textures and effects | 15% | 0% | Not yet mapped to VIF/VU/GS behavior |
+| Executable, platform and object system | 10% | 20% | Resource loader, pod configuration loader and TunnelTrack loader are now address-backed |
+| Containers and asset formats | 15% | 30% | 103/103 outer RES files pass; PHY and SPL families are now structurally documented |
+| Tracks, world and collision | 15% | 12% | 26 SPL graphs validated and runtime node layout/flags mapped; geometry/collision formats remain open |
+| Vehicle physics, boost and damage | 15% | 12% | 23 PHY files parsed; many runtime field offsets mapped; upgrade selection/equations remain open |
+| Race logic, AI and progression | 10% | 3% | SPL branch graph and AI/race-control node markers exposed; higher-level behavior still open |
+| Renderer, textures and effects | 15% | 0% | PSG/PSM/PST/VU/GS behavior not yet mapped |
 | Camera, audio, UI and save behavior | 5% | 8% | Readable CAM/INI/JUK families and inventory evidence; code behavior still mostly open |
 | Differential runtime validation | 7% | 0% | No retained PCSX2 runtime capture yet |
-| Reproducibility and closure | 3% | 15% | RES parser and dated evidence record added; clean end-to-end verifier run still open |
+| Reproducibility and closure | 3% | 25% | RES, PHY and SPL inspection tooling and dated evidence records are now retained |
 
-Weighted total from this rubric is approximately **10.9%**, rounded to **11%**.
+Weighted total from this rubric is approximately **15.6%**, rounded to **16%**.
 
-## Latest verified development
+## Latest verified developments
 
-The retail `.RES` outer format is now structurally reproducible across all 103 extracted containers:
+### Resource containers
+
+The retail `.RES` outer format is structurally reproducible across all 103 extracted containers:
 
 - 34,128 logical resource directory records
 - 44,861 zlib chunks
 - every chunk expands to `0x6000` bytes
 - every compressed chunk is followed by `0xff`
-- every logical resource offset is on a `0x6000` virtual boundary
 - no overlapping resource ranges
 - no unexplained trailing bytes
 
-See `formats/RES.md`, `executable/resource_loader.md` and `records/2026-10-07-res-container.md`.
+### Pod physics
+
+All 23 retail pod `.phy` configurations parse as INI-style text. The executable routine beginning at `0x002146c0` directly consumes the same section/key names and provides a first runtime field map for gravity, repulsor, pod-animation, steering and damage/repair data.
+
+The consolidated `UI/PODPHYS.RES` copies still match the matching pod-local `.phy` resources 23/23 byte-for-byte.
+
+### Track graphs
+
+All 26 retail `.spl` resources parse successfully:
+
+- 4,999 nodes
+- 5,108 directed edges
+- 103 branch nodes
+
+The `TunnelTrack` loader at `0x002a1260..0x002a1d70` uses 0x80-byte runtime node records and packs eight authored routing/AI markers into a flags byte at node `+0x79`.
+
+See `formats/RES.md`, `formats/PHY.md`, `formats/SPL.md`, `executable/resource_loader.md`, and `executable/pod_track_loaders.md`.
 
 ## Confirmed disc-level dataset counts
 
