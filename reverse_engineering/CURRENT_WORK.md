@@ -2,36 +2,33 @@
 
 ## Active target
 
-`SLUS_202.68` — North American retail PS2 executable.
+Trace the resource system from `SLUS_202.68` into one complete pod and track dependency chain.
 
-## Immediate goals
+## Latest development
 
-1. Establish ELF layout, entry point, load addresses, sections, and symbol-table state.
-2. Recover a first-pass function map from strings, cross-references, RTTI-like names, assertions, and source-file diagnostics.
-3. Identify resource-loading entry points for `.RES`, `.PST`, `.CAM`, and related data.
-4. Trace pod and track loading from filename construction to parsed runtime structures.
-5. Build subsystem maps for race logic, physics, collision, camera, audio, rendering, and UI.
-6. Add PCSX2 runtime experiments once static addresses are stable.
+The outer retail `.RES` format is no longer only a string/header hypothesis.
 
-## High-value executable evidence already observed
+A bounded parser now reconstructs all 103 extracted retail containers with 103/103 passing the same version-3 rules. The corpus contains 34,128 directory records and 44,861 compressed chunks. Each chunk expands to `0x6000` bytes and is followed by `0xff`; directory offsets address a reconstructed virtual data stream.
 
-The executable retains numerous class names, source filenames, assertions, parameter labels, and format strings. Examples include:
+`UI/PODPHYS.RES` contains 23 `.phy` resources. Each one is byte-identical to the `.phy` copy inside its corresponding `PODS/PODxx/PODxx.RES` bundle.
 
-- `PodPhysicsObject`
-- `PodPhysicsObjectGroup`
-- `PodCameraController`
-- `PodTVCamera`
-- `PodRaceStartCamera`
-- `PodAnnouncer`
-- `PodJukebox`
-- `VisibilityQuadTree`
-- `WaterObject`
-- `PSXRenderStateBlock`
-- `SurfaceGeometryInstance`
-- `PSXSignatureWave`
+The executable routine at `0x0012cea0..0x0012dca0` is strongly anchored as the current `LoadResourceFile` candidate by direct references to its own `DataAccess.cpp` diagnostics. Standard MIPS instructions in that routine independently show `0x6000` block handling and a version check that includes the retail version 3 path.
 
-Compiler-identification text includes `MW MIPS C Compiler (2.4.1.01)`.
+## Current evidence files
 
-## Next checkpoint
+- `formats/RES.md`
+- `executable/resource_loader.md`
+- `scripts/res_inspect.py`
+- `records/2026-10-07-res-container.md`
 
-Produce an address-backed executable map rather than relying only on strings.
+## Next targets
+
+1. Follow a `POD01.RES` geometry/material resource from the reconstructed directory into the executable consumer.
+2. Trace one `UI/PODPHYS.RES` `.phy` read into `PodPhysicsObject` state and identify the first typed fields.
+3. Map `TA.RES` and `TB.RES` top-level `.tob`, `.aub`, `.scb`, `.col`, `.psg` and `.spl` consumers without assuming extension semantics from names alone.
+4. Retain an Emotion Engine-aware disassembly export so R5900-only instructions in the loader can be named safely.
+5. Start a nonempty PCSX2 runtime capture after the first loader/object addresses are stable.
+
+## Evidence rule
+
+New findings should be written into the dated record and stable subsystem note as soon as they change the current understanding. Failed hypotheses and corrected interpretations stay in the record rather than being silently removed.
