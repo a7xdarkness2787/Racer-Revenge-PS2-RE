@@ -1,0 +1,62 @@
+{
+  "record_date": "2026-10-07",
+  "canonical_target_sha256": "c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30",
+  "questions": [
+    {
+      "id": "PSG-PAYLOAD-001",
+      "priority": "highest",
+      "subsystem": "renderer/geometry",
+      "status": "OPEN",
+      "question": "What is the first record structure after the verified PSG hierarchy and material tables, and how are records assigned to hierarchy objects?",
+      "evidence": ["formats/PSG.md", "executable/surface_geometry_loader.md"]
+    },
+    {
+      "id": "PSG-PS2-001",
+      "priority": "highest",
+      "subsystem": "renderer/PS2",
+      "status": "OPEN",
+      "question": "Where are VIF, VU, GIF and DMA packet boundaries in the PSG payload, and how do material references feed the submission path?",
+      "evidence": ["formats/PSG.md", "EXECUTABLE_MAP.md"]
+    },
+    {
+      "id": "COL-S16-001",
+      "priority": "high",
+      "subsystem": "collision",
+      "status": "OPEN",
+      "question": "What exact scale/dequantization rule converts the signed-16 collision vertex encoding used by 11 static collision bodies?",
+      "evidence": ["formats/COL.md", "executable/collision_loader.md"]
+    },
+    {
+      "id": "POD-UPGRADE-001",
+      "priority": "high",
+      "subsystem": "vehicle physics/upgrades",
+      "status": "OPEN",
+      "question": "How are A/B/C authored pod values selected or interpolated at runtime for thrust, top speed, defense, repair and cooling?",
+      "evidence": ["formats/PHY.md", "executable/pod_track_loaders.md"]
+    },
+    {
+      "id": "TRACK-PROGRESS-001",
+      "priority": "high",
+      "subsystem": "race logic/AI",
+      "status": "OPEN",
+      "question": "How do TunnelTrack branch arrays, progress-node lists and packed node flags feed lap/checkpoint validation and AI path decisions?",
+      "evidence": ["formats/SPL.md", "executable/pod_track_loaders.md"]
+    },
+    {
+      "id": "RUNTIME-ORACLE-001",
+      "priority": "high",
+      "subsystem": "runtime validation",
+      "status": "OPEN",
+      "question": "What is the smallest stable PCSX2 capture contract for reproducing loader, physics, race and renderer state from the canonical retail build?",
+      "evidence": ["runtime_oracle/README.md"]
+    },
+    {
+      "id": "RES-V2-001",
+      "priority": "low",
+      "subsystem": "resource containers",
+      "status": "OPEN",
+      "question": "What are the executable-supported RES version-2 layout differences, if a suitable fixture can be found?",
+      "evidence": ["formats/RES.md", "executable/resource_loader.md"]
+    }
+  ]
+}

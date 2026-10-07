@@ -1,4 +1,4 @@
-# Retail disc identity
+# Retail Disc Identity
 
 ## Source
 
@@ -42,5 +42,6 @@ Converted with bchunk 1.2.2.
 `SLUS_202.68`
 
 - Size: 2,972,720 bytes
+- SHA-256: `c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30`
 
-The raw retail image and extracted game assets are intentionally kept outside this repository.
+Retail media and extracted assets are intentionally kept outside this repository.

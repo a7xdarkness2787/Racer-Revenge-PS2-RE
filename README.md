@@ -1,27 +1,82 @@
-# Racer Revenge PS2 RE
+# Star Wars: Racer Revenge — PS2 Reverse Engineering
 
-Reverse-engineering research and tooling for the PlayStation 2 release of *Star Wars: Racer Revenge*.
+Standalone reverse-engineering research for the North American PlayStation 2 release of **Star Wars: Racer Revenge**.
 
-This repository documents executable analysis, disc structure, file formats, gameplay systems, rendering behavior, and reproducible experiments for the North American PS2 release.
+This repository is an evidence-first research archive. It contains independently derived format specifications, executable maps, structure notes, corpus statistics, verification/inspection tools, chronological research records, and plans for runtime validation.
 
-## Reference build
+It does **not** contain the original disc image, boot executable, extracted models, textures, audio, movies, or other proprietary retail payloads.
 
-- Region: USA
-- Boot executable: `SLUS_202.68`
-- Executable size: 2,972,720 bytes
-- Disc volume: `M11`
-- Publisher field: `LUCASARTS ENTERTAINMENT LLC`
-- Preparer field: `RAINBOW`
-- Disc image creation timestamp: 2002-01-17 01:27:58
+## Canonical target
 
-### Source-image hashes
-
-- BIN SHA-256: `208eb5f13f88e9a39eba64cb883d8f0ba523745a48386ec70b96bb073879deb9`
+- boot executable: `SLUS_202.68`
+- executable size: `2,972,720` bytes
+- executable SHA-256: `c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30`
+- source BIN size: `577,312,512` bytes
+- source BIN SHA-256: `208eb5f13f88e9a39eba64cb883d8f0ba523745a48386ec70b96bb073879deb9`
 - CUE SHA-256: `7a7ac8c09417c6871963cd4e6f08b7b6fd1dbc39f704a0ab45359aeb96452e5e`
-- Converted filesystem ISO SHA-256: `0f12c08fe9c7cbed988e826a40a6b982884668fc9816f085ad71d3312924ad67`
+- converted filesystem ISO size: `502,693,888` bytes
+- converted ISO SHA-256: `0f12c08fe9c7cbed988e826a40a6b982884668fc9816f085ad71d3312924ad67`
+- disc volume: `M11`
 
-## Repository policy
+See `reference/targets.json` and `reference/disc_identity.md`.
 
-Retail game media, executable binaries, extracted assets, audio, and large archive bundles are not committed here. This repository contains documentation, hashes, tooling, format descriptions, scripts, and independently produced analysis.
+## Current research state
 
-See `reverse_engineering/STATUS.md` for current progress and `reverse_engineering/CURRENT_WORK.md` for the active investigation.
+Current documented maturity is approximately **24%** toward a reproducible technical specification of the retail game.
+
+Strongest current results include:
+
+- all **103** retail `.RES` containers structurally reproduced;
+- **34,128** embedded resource records and **44,861** compressed chunks validated;
+- all **23** pod `.phy` configuration resources parsed and connected to an address-backed pod configuration loader;
+- all **26** track `.spl` graph resources parsed, covering **4,999** nodes and **5,108** explicit edges;
+- all **2,505** embedded `.col` resources parsed across three serialized collision types;
+- **222,577** collision BVH nodes structurally verified;
+- all **9,917** embedded `.psg` resources pass the recovered fixed-table parser;
+- **17,942** PSG hierarchy descriptors and **22,175** material-name entries validated;
+- executable-side loaders mapped for RES, pod configuration, TunnelTrack splines, collision, and PSG hierarchy/material tables.
+
+The next major frontier is the PS2-specific PSG geometry payload: object payload boundaries, material references, and VIF/VU/GIF/DMA submission data.
+
+## Repository layout
+
+```text
+analysis/         dated technical investigations and deep dives
+behavior/         stable gameplay/runtime behavior specifications
+commands/         reproducible command recipes and command-session notes
+database/         machine-readable questions and research state
+executable/       SLUS-specific loader and executable analysis
+formats/          independently derived file-format specifications
+mapping/          address/cross-reference/correlation notes
+raw/              safe text-only generated evidence and verifier output
+records/          chronological research records and corrections
+reference/        canonical hashes, corpus metadata and target identities
+runtime_oracle/   PCSX2/runtime capture and differential-validation design
+scripts/          parsers, inspectors, verifiers and hygiene tooling
+structures/       runtime field/offset/type maps
+symbols/          named executable functions/globals and address ownership
+tooling/          analysis environment and tool limitations
+traces/           runtime trace schemas, policies and captured metadata
+```
+
+## Read first
+
+- `RESEARCH_INDEX.md` — subsystem map to the strongest evidence
+- `STATUS.md` — current verified state and maturity
+- `CURRENT_WORK.md` — active handoff and immediate queue
+- `ROADMAP.md` — long-term research program
+- `DEVELOPMENT_LOG.md` — concise chronological research history
+- `EXECUTABLE_MAP.md` — current address navigation map
+- `database/questions-current.json` — machine-readable open frontier
+- `UPDATE_PROTOCOL.md` — mandatory documentation/evidence rules
+- `CONTRIBUTING.md` — contribution and provenance standards
+
+## Evidence policy
+
+Use **VERIFIED**, **OBSERVED**, **INFERRED**, **HYPOTHESIS**, **TODO**, **BLOCKED**, and **INVALIDATED** consistently. Failed probes and superseded interpretations remain part of the permanent research record.
+
+## Proprietary-data rule
+
+Do not commit original retail payloads. Scripts that require a private retail fixture should accept a local path, validate identity when practical, and emit only independently derived metadata or text evidence suitable for the repository.
+
+See `UPDATE_PROTOCOL.md` for the full research-record standard.
