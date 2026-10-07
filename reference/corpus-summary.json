@@ -1,0 +1,53 @@
+{
+  "record_date": "2026-10-07",
+  "disc_level_extensions": {
+    "VAG": 2010,
+    "INI": 136,
+    "RES": 103,
+    "CAM": 23,
+    "PST": 18,
+    "IRX": 8,
+    "PSS": 3,
+    "JUK": 3,
+    "TXT": 2,
+    "LSI": 2,
+    "JUB": 2,
+    "IMG": 1,
+    "ICO": 1,
+    "CNF": 1,
+    "68": 1
+  },
+  "embedded_verified": {
+    "res": {
+      "files": 103,
+      "resource_records": 34128,
+      "compressed_chunks": 44861,
+      "parser_passes": 103,
+      "parser_failures": 0
+    },
+    "phy": {
+      "files": 23,
+      "matching_consolidated_and_local_copies": 23
+    },
+    "spl": {
+      "files": 26,
+      "nodes": 4999,
+      "explicit_edges": 5108,
+      "branch_nodes": 103
+    },
+    "col": {
+      "files": 2505,
+      "type_0": 2292,
+      "type_1": 9,
+      "type_2": 204,
+      "bvh_nodes": 222577,
+      "parser_failures": 0
+    },
+    "psg": {
+      "files": 9917,
+      "object_descriptors": 17942,
+      "material_name_records": 22175,
+      "fixed_table_parser_failures": 0
+    }
+  }
+}

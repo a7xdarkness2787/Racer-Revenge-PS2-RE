@@ -1,0 +1,44 @@
+{
+  "project": "Racer Revenge PS2 RE",
+  "canonical_target": {
+    "region": "North America",
+    "platform": "PlayStation 2",
+    "boot_executable": {
+      "name": "SLUS_202.68",
+      "size_bytes": 2972720,
+      "sha256": "c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30"
+    },
+    "disc_image": {
+      "bin": {
+        "name": "Star Wars - Racer Revenge (USA).bin",
+        "size_bytes": 577312512,
+        "sha256": "208eb5f13f88e9a39eba64cb883d8f0ba523745a48386ec70b96bb073879deb9"
+      },
+      "cue": {
+        "name": "Star Wars - Racer Revenge (USA).cue",
+        "size_bytes": 97,
+        "sha256": "7a7ac8c09417c6871963cd4e6f08b7b6fd1dbc39f704a0ab45359aeb96452e5e",
+        "track_layout": "MODE2/2352"
+      },
+      "filesystem_iso": {
+        "name": "racer_revenge_01.iso",
+        "size_bytes": 502693888,
+        "sha256": "0f12c08fe9c7cbed988e826a40a6b982884668fc9816f085ad71d3312924ad67",
+        "conversion_tool": "bchunk 1.2.2"
+      }
+    },
+    "iso_metadata": {
+      "system": "PLAYSTATION",
+      "volume": "M11",
+      "volume_set": "M11",
+      "publisher": "LUCASARTS ENTERTAINMENT LLC",
+      "preparer": "RAINBOW",
+      "application": "PLAYSTATION",
+      "creation_timestamp": "2002-01-17 01:27:58"
+    }
+  },
+  "policy": {
+    "retail_payloads_committed": false,
+    "derived_metadata_only": true
+  }
+}
