@@ -2,46 +2,56 @@
 
 ## Active investigation
 
-Turn the newly verified PSG VIF batch layout into independently reconstructed geometry and identify the VU/material path.
+Follow the independently reconstructed PSG mesh data into the VU/material submission path and close the remaining render-format exceptions.
 
 ## Latest development
 
-The 881-file POD01/TA/TB PSG sample contains **12,356 MSCNT-terminated VIF geometry batches**.
+The detailed POD01/TA/TB sample is now parsed end-to-end: **881 PSG files, 0 file-level failures, and no unexplained bytes after the known optional tail**.
 
-Each batch begins with a single V4-32 upload to VU address 0 whose four words are:
+The renderer-side serialization is substantially clearer:
+
+- 0x24-byte render header
+- one or more LOD groups
+- 0x14-byte material-block headers
+- VIF packets
+- optional multi-object identity remap tail
+
+Position reconstruction is now verified:
 
 ```text
-0x8000 | N
-0x30024000
-0x00000412
-0x00000000
+xyz = position_origin + signed_raw_xyz * position_scale
+object_index = abs(W) / 16 - 1
 ```
 
-`N` exactly matches the following element count.
+Ordinary triangle strips are reconstructed from the W sign with alternating winding. The rule validates with zero structural topology warnings in 877 ordinary PSGs.
 
-All 12,356 batches then lay their per-element streams contiguously in VU memory.
+V3-8 data is strongly validated as normal vectors. V2-16 remains texture-coordinate-like and V4-8 remains color-like until direct render-state correlation is complete.
 
-Most use V4-16 positions; 106 batches use V4-32 positions. Every batch also carries V3-8 and V2-16 streams, and 11,710 carry an additional V4-8 stream.
+The four `CableShadow*.psg` files are the known special topology exception.
 
-The position/normal/UV/color semantic mapping is currently inferred from stream shape and layout rather than promoted as final fact.
+Six POD01 render components now cross-check against matching type-0 COL bounds to floating-point precision.
 
 ## Current evidence
 
 - `formats/PSG.md`
-- `analysis/2026-10-07-psg-vif-payload.md`
+- `analysis/2026-10-08-psg-mesh-reconstruction.md`
+- `records/2026-10-08-psg-render-payload.md`
 - `executable/psx_surface_geometry.md`
-- `scripts/psg_vif_inspect.py`
-- `raw/2026-10-07-psg-vif-summary.txt`
+- `scripts/psg_mesh_extract.py`
+- `raw/2026-10-08-psg-render-summary.txt`
+- `reference/corpus-summary.json`
 
 ## Immediate queue
 
-- derive V4-16 position dequantization and compare against V4-32 batches;
-- determine primitive topology;
-- calculate decoded bounds and compare with PSG descriptor/COL bounds;
-- identify material selection around MSCNT boundaries;
-- locate the VU microprogram reached by the geometry batches;
-- decode later records in the 194 sampled PSGs that continue beyond the first packet;
-- start runtime capture after a stable geometry object can be reconstructed.
+- identify the VU microprogram reached by the geometry MSCNT path
+- map material-block flags `0x107` and `0xff010f`
+- identify the material-block `+0x08` float
+- prove V2-16 texture-coordinate semantics against texture/material use
+- identify V4-8 channel semantics
+- decode the four CableShadow PSGs without forcing the ordinary strip rule
+- determine the runtime metric compared with 0.18/0.36/0.50 LOD thresholds
+- expand detailed payload validation from the 881-file sample toward all 9,917 PSG resources
+- start retained PCSX2 geometry/runtime capture once the VU/material path is stable
 
 ## Documentation contract
 

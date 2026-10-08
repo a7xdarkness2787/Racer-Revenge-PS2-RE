@@ -6,7 +6,7 @@ This is the fast path into the current Racer Revenge PS2 research.
 
 - `reference/targets.json` — canonical media/executable identity
 - `reference/disc_identity.md` — human-readable disc provenance
-- `reference/corpus-summary.json` — machine-readable corpus counts
+- `reference/corpus-summary.json` — machine-readable full-corpus and scoped-sample counts
 - `STATUS.md` — current verified state and maturity
 - `CURRENT_WORK.md` — active handoff
 - `database/questions-current.json` — open technical frontier
@@ -48,23 +48,26 @@ This is the fast path into the current Racer Revenge PS2 research.
 - `scripts/col_inspect.py`
 - `executable/collision_loader.md`
 
-## Surface geometry and PS2 render payload
+## Surface geometry
 
-Stable fixed-table entry points:
+Full-corpus fixed-table evidence:
 
 - `formats/PSG.md`
 - `records/2026-10-07-psg-header.md`
 - `scripts/psg_inspect.py`
 - `executable/surface_geometry_loader.md`
 
-Current payload frontier:
+Detailed POD01/TA/TB render-payload evidence:
 
-- `analysis/2026-10-07-psg-vif-payload.md`
+- `analysis/2026-10-08-psg-mesh-reconstruction.md`
+- `records/2026-10-08-psg-render-payload.md`
+- `scripts/psg_mesh_extract.py`
 - `executable/psx_surface_geometry.md`
-- `scripts/psg_vif_inspect.py`
-- `raw/2026-10-07-psg-vif-summary.txt`
+- `raw/2026-10-08-psg-render-summary.txt`
 
-The first VIF block is verified in an 881-file canonical POD01/TA/TB sample. Later multi-block structures, material ownership and VU/GIF/GS semantics remain active work.
+The 881-file detailed sample now has closed serialization, decoded position scale/origin, hierarchy object tags, ordinary strip topology, LOD/material grouping and independent PSG/COL bounds validation.
+
+The active renderer frontier is VU/material/GIF/GS behavior, CableShadow special geometry, and expansion of detailed payload validation toward all 9,917 PSG resources.
 
 ## Runtime validation
 

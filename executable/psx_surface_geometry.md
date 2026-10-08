@@ -3,7 +3,7 @@
 **Build:** North American retail `SLUS_202.68`  
 **SHA-256:** `c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30`
 
-Status: **OBSERVED / address-backed**.
+Status: **OBSERVED / address-backed**, with serialized behavior independently validated from PSG payloads.
 
 ## Type ownership
 
@@ -11,19 +11,25 @@ The executable contains `PSXSurfaceGeometry` type metadata. A related virtual-fu
 
 The exact inheritance and every virtual slot have not yet been named.
 
-## Serialized packet helper
+## PS2 serialized packet helper
 
 `0x00246300`
 
-This helper is called from the surface-geometry load path at `0x0026e34c`.
+This helper is called from the higher-level SurfaceGeometry load family at `0x0026e34c`.
 
-The routine performs repeated file reads, allocation, 16-byte size alignment and packet-buffer construction. It is part of the PS2-specific serialized geometry path rather than the generic hierarchy/material-name reader.
+The surrounding code performs repeated file reads, allocation/alignment and PS2 packet preparation. The independently recovered 881-file payload sample now shows that the serialized data being consumed consists of:
 
-Because several R5900 register-transfer instructions are not decoded reliably by generic LLVM MIPS output, the complete field-by-field calling convention remains open.
+- a render header
+- LOD groups
+- material/VIF blocks
+- VIF geometry batches
+- an optional multi-object remap tail
+
+The exact register-level correspondence for every serialized field remains open because generic LLVM MIPS output does not decode all R5900 instructions reliably.
 
 ## VIF packet construction
 
-A separate PS2 geometry path around `0x002469c0` constructs VIF data in memory.
+A PS2 geometry path around `0x002469c0` constructs VIF data in memory.
 
 At `0x00246a58..0x00246a9c`, it emits words including:
 
@@ -38,25 +44,24 @@ At `0x00246a58..0x00246a9c`, it emits words including:
 <float>
 ```
 
-The constant `0x6c018000` is significant because every first VIF packet in the current 881-PSG POD01/TA/TB sample begins with exactly `0x6c018000`.
+The `0x6c018000` base word independently matches the per-batch V4-32 header upload recovered from serialized PSG packets.
 
-That gives direct executable support for interpreting the PSG payload as VIF command data.
+The sampled PSG stream now establishes 18,965 MSCNT-terminated batches, with V4-16 or V4-32 position streams followed by V3-8, V2-16 and optional V4-8 streams.
 
 ## Related generic SurfaceGeometry code
 
-The higher-level create/load path remains around `0x0026e820`.
-
-Known helpers:
-
+- around `0x0026e820` — higher-level create/open/format-validation path
 - `0x0026e640` — material-name table reader
 - `0x0028cac0` — hierarchy descriptor reader
-- `0x0026e34c` — call into the PS2-specific serialized packet helper at `0x00246300`
+- `0x0026e34c` — call into PS2-specific helper `0x00246300`
 
-## Open work
+Fresh disassembly of the `0x0026e180..0x0026e380` region confirms nested serialized-data loops and the direct call to `0x00246300`. R5900-only operations in that region remain intentionally unnamed until checked with an Emotion Engine-aware disassembler.
 
-- identify every field consumed by `0x00246300`;
-- identify the owner/object type passed to the helper;
-- map the 0x40 PSG payload descriptor fields to runtime fields;
-- map VIF UNPACK destinations to VU memory semantics;
-- identify the VU microprogram and GIF/GS submission path;
-- distinguish file-owned packet bytes from runtime-generated DMA/VIF wrappers.
+## Current executable frontier
+
+- identify the VU microprogram reached by MSCNT
+- correlate the 0x24 render header and 0x14 material block fields with specific reads in `0x00246300`
+- identify material/render-state setup around each VIF packet
+- locate GIF/GS submission generated from the uploaded VU data
+- determine the runtime use of the multi-object remap tail
+- determine the exact LOD comparison metric

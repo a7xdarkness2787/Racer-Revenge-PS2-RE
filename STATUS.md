@@ -1,62 +1,69 @@
 # Reverse-Engineering Status
 
-**Record date:** 2026-10-07  
+**Record date:** 2026-10-08  
 **Canonical build:** North American retail `SLUS_202.68`
 
 ## Overall
 
-Estimated overall research maturity: **about 27%**
+Estimated overall research maturity: **about 30%**
 
-This percentage measures progress toward a documented, reproducible understanding of the retail PS2 game. It is not a playable-game percentage or a claim that 27% of machine code has been semantically recovered.
+This percentage measures progress toward a documented, reproducible understanding of the retail PS2 game. It is not a playable-game percentage and is not a claim that 30% of machine code has been semantically recovered.
 
 | Area | Weight | Evidence score | Current state |
 | --- | ---: | ---: | --- |
 | Input identity and corpus inventory | 5% | 80% | Retail target and extracted manifests recorded |
-| Executable, platform and object system | 10% | 32% | Resource, pod config, TunnelTrack, collision and PSXSurfaceGeometry families address-backed |
-| Containers and asset formats | 15% | 55% | RES, PHY, SPL, COL and PSG/VIF structures have repeatable tooling |
-| Tracks, world and collision | 15% | 28% | Track graph and complete COL corpus structurally mapped |
-| Vehicle physics, boost and damage | 15% | 18% | PHY runtime offsets and pod collision/geometry hierarchy exposed |
+| Executable, platform and object system | 10% | 33% | Major resource/config/collision/geometry loader families address-backed |
+| Containers and asset formats | 15% | 60% | RES, PHY, SPL, COL and PSG fixed structures documented; detailed PSG payload closed for an 881-file canonical sample |
+| Tracks, world and collision | 15% | 29% | Track graph and complete COL corpus structurally mapped; render/collision bounds cross-validated on POD components |
+| Vehicle physics, boost and damage | 15% | 18% | PHY runtime offsets and pod component geometry/collision ownership exposed |
 | Race logic, AI and progression | 10% | 3% | SPL graph and routing/AI markers exposed |
-| Renderer, textures and effects | 15% | 18% | PSG hierarchy/materials plus VIF batch grammar verified in 881-file sample |
+| Renderer, textures and effects | 15% | 27% | PSG LOD/material/VIF layout, position decode, ordinary strip topology and object ownership recovered in the detailed sample |
 | Camera, audio, UI and save behavior | 5% | 8% | Major file families inventoried; code behavior mostly open |
 | Differential runtime validation | 7% | 0% | No retained PCSX2 runtime trace yet |
-| Reproducibility and closure | 3% | 48% | Stable specs, tools, raw summaries and dated analysis retained |
+| Reproducibility and closure | 3% | 55% | Stable specs, machine-readable state, parsers and mesh reconstruction tooling retained |
 
-Weighted total is approximately **27%**.
+Weighted total is approximately **30%**.
 
-## Renderer development
+## Latest renderer result
 
-The current POD01/TA/TB sample contains 881 PSG resources and 12,356 MSCNT-terminated VIF batches.
+The detailed canonical PSG payload sample now includes every PSG embedded in POD01, TA and TB:
 
-The VIF memory layout is now structurally verified:
+- PSG files: **881**
+- LOD groups: **890**
+- material/VIF blocks: **1,216**
+- MSCNT geometry batches: **18,965**
+- submitted positions: **250,514**
+- file-level parse failures: **0**
+- unexplained bytes after the known optional tail: **0**
 
-- one V4-32 header vector at VU address 0;
-- `N` position elements beginning at address 1;
-- `N` V3-8 elements at `1+N`;
-- `N` V2-16 elements at `1+2N`;
-- optional `N` V4-8 elements at `1+3N`;
-- MSCNT terminates the batch.
+Recovered behavior includes the 0x24-byte render header, LOD groups and thresholds, material-block ownership, signed V4-16/V4-32 position decoding, hierarchy object ownership encoded in position W, ordinary triangle-strip reconstruction, strongly validated V3-8 normals, and multi-object remap tails.
 
-All 12,356 batches use contiguous destinations. The batch header encodes `N` as `0x8000 | N`.
+All 865 single-object sample PSGs reproduce their fixed bounds within one position quantization unit.
 
-Most batches use V4-16 positions; 106 use V4-32 positions.
+Six POD01 render components also match corresponding type-0 COL bounds to floating-point precision, independently validating the render coordinate recovery.
 
-The likely position/normal/UV/color interpretation remains explicitly marked inferred until independent geometry/runtime confirmation.
+The four `CableShadow*.psg` resources remain a known special topology exception.
 
-## Other verified coverage
+## Full-corpus coverage still retained
 
 - RES: 103/103 containers
 - PHY: 23/23 pod configurations
 - SPL: 26/26 track graphs
 - COL: 2,505/2,505 resources, 222,577 BVH nodes
-- PSG fixed tables: 9,917/9,917 files
+- PSG fixed tables: 9,917/9,917 resources
+
+Detailed PSG render-payload statistics currently cover the 881-file POD01/TA/TB sample and must not be presented as 9,917-file payload coverage.
 
 ## Highest-priority unknowns
 
-- PSG position scaling and primitive topology
-- material ownership and VU microprogram
-- later PSG payload records
-- s16 collision dequantization
-- pod upgrade A/B/C selection
-- track graph use by race logic/AI
+- VU microprogram and GIF/GS output
+- material-block flag and metric semantics
+- exact LOD runtime selection metric
+- direct texture proof for V2-16 and channel meaning for V4-8
+- CableShadow special geometry path
+- full 9,917-file PSG payload validation
+- pod upgrade A/B/C selection/interpolation
+- race/checkpoint/AI runtime consumers
 - retained PCSX2 runtime oracle
+
+See `database/questions-current.json` and `CURRENT_WORK.md`.

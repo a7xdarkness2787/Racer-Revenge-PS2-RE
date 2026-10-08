@@ -1,5 +1,5 @@
 {
-  "record_date": "2026-10-07",
+  "record_date": "2026-10-08",
   "disc_level_extensions": {
     "VAG": 2010,
     "INI": 136,
@@ -49,5 +49,24 @@
       "material_name_records": 22175,
       "fixed_table_parser_failures": 0
     }
+  },
+  "psg_payload_sample": {
+    "scope": [
+      "PODS/POD01/POD01.RES",
+      "TRACKS/TA.RES",
+      "TRACKS/TB.RES"
+    ],
+    "psg_files": 881,
+    "parse_failures": 0,
+    "unexplained_bytes_after_known_tail": 0,
+    "lod_groups": 890,
+    "material_blocks": 1216,
+    "vif_batches": 18965,
+    "submitted_positions": 250514,
+    "v4_16_position_batches": 18830,
+    "v4_32_position_batches": 135,
+    "ordinary_topology_files": 877,
+    "special_cable_shadow_files": 4,
+    "multi_object_files": 16
   }
 }

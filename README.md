@@ -22,21 +22,23 @@ See `reference/targets.json` and `reference/disc_identity.md`.
 
 ## Current research state
 
-Current documented maturity is approximately **24%** toward a reproducible technical specification of the retail game.
+Current documented maturity is approximately **30%** toward a reproducible technical specification of the retail game.
 
 Strongest current results include:
 
 - all **103** retail `.RES` containers structurally reproduced;
 - **34,128** embedded resource records and **44,861** compressed chunks validated;
-- all **23** pod `.phy` configuration resources parsed and connected to an address-backed pod configuration loader;
-- all **26** track `.spl` graph resources parsed, covering **4,999** nodes and **5,108** explicit edges;
+- all **23** pod `.phy` resources parsed and connected to an address-backed pod configuration loader;
+- all **26** track `.spl` graphs parsed, covering **4,999** nodes and **5,108** explicit edges;
 - all **2,505** embedded `.col` resources parsed across three serialized collision types;
 - **222,577** collision BVH nodes structurally verified;
 - all **9,917** embedded `.psg` resources pass the recovered fixed-table parser;
-- **17,942** PSG hierarchy descriptors and **22,175** material-name entries validated;
-- executable-side loaders mapped for RES, pod configuration, TunnelTrack splines, collision, and PSG hierarchy/material tables.
+- a detailed **881-PSG** POD01/TA/TB render sample now parses end-to-end with no unexplained bytes;
+- that render sample contains **890 LOD groups**, **1,216 material/VIF blocks**, **18,965 MSCNT geometry batches**, and **250,514 submitted positions**;
+- signed position dequantization, hierarchy object ownership, ordinary triangle-strip topology and material-block ownership are independently reconstructed;
+- six POD01 PSG components cross-check against matching type-0 COL bounds to quantization/floating-point precision.
 
-The next major frontier is the PS2-specific PSG geometry payload: object payload boundaries, material references, and VIF/VU/GIF/DMA submission data.
+The highest-value renderer frontier is now the VU microprogram/material/GIF/GS path, CableShadow special geometry, and expansion of detailed PSG payload validation beyond the current 881-file sample.
 
 ## Repository layout
 
@@ -52,7 +54,7 @@ raw/              safe text-only generated evidence and verifier output
 records/          chronological research records and corrections
 reference/        canonical hashes, corpus metadata and target identities
 runtime_oracle/   PCSX2/runtime capture and differential-validation design
-scripts/          parsers, inspectors, verifiers and hygiene tooling
+scripts/          parsers, inspectors, verifiers and mesh reconstruction tools
 structures/       runtime field/offset/type maps
 symbols/          named executable functions/globals and address ownership
 tooling/          analysis environment and tool limitations
@@ -75,8 +77,10 @@ traces/           runtime trace schemas, policies and captured metadata
 
 Use **VERIFIED**, **OBSERVED**, **INFERRED**, **HYPOTHESIS**, **TODO**, **BLOCKED**, and **INVALIDATED** consistently. Failed probes and superseded interpretations remain part of the permanent research record.
 
+Detailed statistics are always scoped explicitly. Full-corpus PSG fixed-table results are not conflated with the current 881-file detailed render-payload sample.
+
 ## Proprietary-data rule
 
-Do not commit original retail payloads. Scripts that require a private retail fixture should accept a local path, validate identity when practical, and emit only independently derived metadata or text evidence suitable for the repository.
+Do not commit original retail payloads or reconstructed retail mesh output. Scripts accept user-supplied private fixtures and emit independently derived metadata or private validation output.
 
 See `UPDATE_PROTOCOL.md` for the full research-record standard.

@@ -27,12 +27,16 @@
 
 `0x002146c0` — pod configuration loader candidate, anchored by PHY section/key strings and stable runtime stores.
 
-## Surface geometry
+## PS2 surface geometry
 
 | Address/range | Identification |
 | --- | --- |
-| around `0x0026e820` | SurfaceGeometry create/open/format-validation path |
+| `0x00246300` | PS2 serialized geometry/packet helper |
+| around `0x002469c0` | VIF packet construction family |
+| `0x00246a58..0x00246a9c` | emits VIF data including `0x6c018000` |
+| `0x0026e34c` | higher-level loader call into `0x00246300` |
 | `0x0026e640` | PSG material-name table reader |
+| around `0x0026e820` | SurfaceGeometry create/open/format-validation path |
 | `0x0028cac0` | PSG hierarchy descriptor reader |
 
 ## TunnelTrack
@@ -41,8 +45,10 @@
 
 ## Current address frontier
 
-- PSG platform-specific payload consumer
-- material index handling and PS2 render submission
+- VU microprogram and MSCNT execution target
+- material/render-state handling and GIF/GS submission
+- exact LOD comparison metric
+- multi-object remap-tail runtime use
 - s16 collision vertex dequantization
-- pod A/B/C upgrade-selection/interpolation
+- pod A/B/C upgrade selection/interpolation
 - race/checkpoint/AI consumers of TunnelTrack flags and branches

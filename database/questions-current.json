@@ -1,28 +1,66 @@
 {
-  "record_date": "2026-10-07",
+  "record_date": "2026-10-08",
   "canonical_target_sha256": "c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30",
   "questions": [
     {
-      "id": "PSG-PAYLOAD-001",
+      "id": "PSG-VU-001",
       "priority": "highest",
-      "subsystem": "renderer/geometry",
-      "status": "PARTIAL",
-      "question": "What are the remaining fields in the verified 0x40 first PSG payload descriptor, and what structures follow the first VIF packet in multi-block PSG files?",
+      "subsystem": "renderer/PS2",
+      "status": "OPEN",
+      "question": "Which VU microprogram consumes the recovered PSG VIF geometry layout, and how does it produce GIF/GS submission state?",
       "evidence": [
         "formats/PSG.md",
-        "analysis/2026-10-07-psg-vif-payload.md",
-        "scripts/psg_vif_inspect.py"
+        "analysis/2026-10-08-psg-mesh-reconstruction.md",
+        "executable/psx_surface_geometry.md"
       ]
     },
     {
-      "id": "PSG-PS2-001",
-      "priority": "highest",
-      "subsystem": "renderer/PS2",
-      "status": "PARTIAL",
-      "question": "How do the verified VIF UNPACK streams map to VU memory, materials, microprogram execution and GIF/GS submission?",
+      "id": "PSG-BLOCK-001",
+      "priority": "high",
+      "subsystem": "renderer/geometry",
+      "status": "OPEN",
+      "question": "What are the bit meanings of material-block flags 0x00000107 and 0x00ff010f, and what is the +0x08 float metric?",
       "evidence": [
-        "analysis/2026-10-07-psg-vif-payload.md",
-        "executable/psx_surface_geometry.md"
+        "formats/PSG.md",
+        "raw/2026-10-08-psg-render-summary.txt"
+      ]
+    },
+    {
+      "id": "PSG-ATTR-001",
+      "priority": "high",
+      "subsystem": "renderer/geometry",
+      "status": "PARTIAL",
+      "question": "Can V2-16 be tied directly to texture coordinates and V4-8 to specific color channels/render semantics?",
+      "evidence": [
+        "formats/PSG.md",
+        "analysis/2026-10-08-psg-mesh-reconstruction.md"
+      ]
+    },
+    {
+      "id": "PSG-LOD-001",
+      "priority": "high",
+      "subsystem": "renderer/geometry",
+      "status": "PARTIAL",
+      "question": "What runtime quantity is compared with the verified 0.18, 0.36 and 0.50 LOD thresholds?",
+      "evidence": ["formats/PSG.md"]
+    },
+    {
+      "id": "PSG-CABLE-001",
+      "priority": "high",
+      "subsystem": "renderer/geometry",
+      "status": "OPEN",
+      "question": "What special primitive or VU path is used by the four CableShadow PSG resources?",
+      "evidence": ["analysis/2026-10-08-psg-mesh-reconstruction.md"]
+    },
+    {
+      "id": "PSG-CORPUS-001",
+      "priority": "medium",
+      "subsystem": "renderer/geometry",
+      "status": "OPEN",
+      "question": "Do the detailed render-payload rules validated on POD01/TA/TB hold across all 9,917 retail PSG resources?",
+      "evidence": [
+        "reference/corpus-summary.json",
+        "scripts/psg_mesh_extract.py"
       ]
     },
     {
