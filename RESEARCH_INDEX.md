@@ -6,7 +6,7 @@ This is the fast path into the current Racer Revenge PS2 research.
 
 - `reference/targets.json` — canonical media/executable identity
 - `reference/disc_identity.md` — human-readable disc provenance
-- `reference/corpus-summary.json` — machine-readable full-corpus and scoped-sample counts
+- `reference/corpus-summary.json` — machine-readable corpus counts
 - `STATUS.md` — current verified state and maturity
 - `CURRENT_WORK.md` — active handoff
 - `database/questions-current.json` — open technical frontier
@@ -50,26 +50,22 @@ This is the fast path into the current Racer Revenge PS2 research.
 
 ## Surface geometry
 
-Full-corpus fixed-table evidence:
+Stable full-corpus evidence:
 
 - `formats/PSG.md`
-- `records/2026-10-07-psg-header.md`
-- `scripts/psg_inspect.py`
-- `executable/surface_geometry_loader.md`
-
-Detailed POD01/TA/TB render-payload evidence:
-
-- `analysis/2026-10-08-psg-mesh-reconstruction.md`
-- `records/2026-10-08-psg-render-payload.md`
+- `analysis/2026-10-08-psg-full-corpus.md`
+- `records/2026-10-08-psg-full-corpus.md`
+- `raw/2026-10-08-psg-full-corpus-summary.txt`
 - `scripts/psg_mesh_extract.py`
-- `executable/psx_surface_geometry.md`
-- `raw/2026-10-08-psg-render-summary.txt`
-- `records/2026-10-08-vif-unpack-flags.md`
+- `scripts/psg_corpus_verify.py`
 - `reference/ps2-vif.md`
+- `executable/psx_surface_geometry.md`
 
-The 881-file detailed sample now has closed serialization, decoded position scale/origin, hierarchy object tags, ordinary strip topology, LOD/material grouping, VIF signedness/TOPS-relative addressing, and independent PSG/COL bounds validation.
+Historical/sample evidence remains under the earlier PSG dated records and analysis notes.
 
-The active renderer frontier is VU/material/GIF/GS behavior, CableShadow special geometry, and expansion of detailed payload validation toward all 9,917 PSG resources.
+Current state: all 9,917 retail PSG payloads parse end-to-end and reconstruct serialized strip topology without warnings.
+
+The active renderer frontier is hierarchy matrix composition, VU execution, material/texture semantics and GIF/GS output.
 
 ## Runtime validation
 

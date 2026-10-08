@@ -1,52 +1,64 @@
 # PS2 surface geometry (.psg)
 
-Status: **VERIFIED fixed tables across 9,917 retail resources; VERIFIED detailed render payload for the 881-file POD01/TA/TB sample**.
+Status: **VERIFIED across the complete North American retail PSG corpus for fixed tables, render headers, LOD/material block serialization, VIF packet grammar, position decoding and serialized triangle-strip topology.**
 
-The full retail corpus and the detailed payload sample are intentionally distinguished throughout this document.
+Canonical build: `SLUS_202.68`  
+Executable SHA-256: `c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30`
 
-## Fixed tables — full retail corpus
+## Complete retail coverage
+
+The recovered retail dataset contains **9,917** embedded PSG resources across **103 RES containers**.
+
+Detailed parser result:
+
+- 9,917 / 9,917 payloads parsed
+- 0 parser failures
+- 0 unexplained payload bytes
+- 17,942 hierarchy descriptors
+- 22,175 material-name records
+- 22,175 material/VIF blocks
+- 366,935 VIF geometry batches
+- 4,869,177 submitted position records
+
+## Fixed header
 
 ```text
 char tag[4]      // "psg\0"
 u32  version     // 3
 u32  object_count
-object_descriptor objects[object_count]
-u32  material_count
-char material_name[material_count][0x40]
 ```
 
-Complete-corpus totals:
-
-- PSG resources: **9,917**
-- object descriptors: **17,942**
-- material-name records: **22,175**
-- object count per file: 1..33
-- material count per file: 1..15
-
-### Object descriptor — 0xe0 bytes
+### Hierarchy descriptor — 0xe0 bytes
 
 ```text
 char  name[0x80]
 float matrix[16]
-float center_like[3]
-float half_extent_like[3]
+float center[3]
+float half_extents[3]
 float radius_like
 u32   parent_index
 ```
 
 The executable reads these fields in exactly 0x80, 0x40, 0x0c, 0x0c, 0x04 and 0x04 byte pieces.
 
-`0xffffffff` is the no-parent/root value. Every full-corpus PSG has exactly one root; all non-root parent indices are valid and acyclic.
+`0xffffffff` is the root/no-parent value.
 
-## Detailed render payload — 881-file sample
+All retail files have exactly one hierarchy root, valid parent indices and acyclic parent chains.
 
-The current detailed sample is every PSG embedded in canonical POD01, TA and TB RES containers.
+## Material-name table
 
-All 881 payloads are parsed end-to-end with no unexplained bytes.
+After the hierarchy descriptors:
 
-### Render header — 0x24 bytes
+```text
+u32 material_count
+char material_name[material_count][0x40]
+```
 
-Immediately after the fixed material-name table:
+Every name is ASCII, NUL-terminated and zero-padded.
+
+## Render header — 0x24 bytes
+
+Immediately after the fixed material table:
 
 ```text
 +0x00  f32 position_scale
@@ -58,14 +70,18 @@ Immediately after the fixed material-name table:
 +0x20  u32 lod_group_count
 ```
 
-Verified sample invariants:
+Complete-corpus invariants:
 
-- `normal_scale == 1/127`
-- `uv_scale_u == uv_scale_v == 1/2047`
-- `origin_present` is 0 or 1
-- the flag is 1 exactly when `position_origin` is nonzero
+- `normal_scale == 1/127` in 9,917 / 9,917 files
+- `uv_scale_u == uv_scale_v == 1/2047` in 9,917 / 9,917 files
+- `origin_present` is always 0 or 1
+- flag 0 corresponds to zero origin: 8,565 files
+- flag 1 corresponds to nonzero origin: 1,352 files
+- no origin/flag mismatches
 
-### LOD group
+## LOD groups
+
+Each group begins:
 
 ```text
 f32 threshold
@@ -73,15 +89,28 @@ u32 material_block_count
 MaterialBlock blocks[material_block_count]
 ```
 
-878 sampled files contain one group with threshold `FLT_MAX`.
+Distribution:
 
-Three POD01 main models contain four groups with thresholds:
+- one LOD group: **9,846 PSGs**
+- four LOD groups: **71 PSGs**
 
-`0.18, 0.36, 0.50, FLT_MAX`.
+The 71 four-group files are exactly the major pod meshes:
 
-Triangle counts decrease through those groups, establishing their LOD role. The runtime quantity compared against the finite thresholds is still open.
+- chariot + left engine + right engine for all 23 pods: 69
+- POD02's additional left/right engine pair: 2
 
-### Material block
+The finite threshold sequence is approximately:
+
+```text
+0.18
+0.36
+0.50
+FLT_MAX
+```
+
+Three files differ only by the final representable float bit in the first two constants.
+
+## Material block — 0x14-byte header
 
 ```text
 +0x00  u32 material_slot
@@ -92,34 +121,41 @@ Triangle counts decrease through those groups, establishing their LOD role. The 
         u8 vif_packet[vif_packet_size]
 ```
 
-Across 1,216 blocks:
+The 22,175 blocks exactly consume the 22,175 fixed material-name records.
 
-- group-local material slots are sequential
-- flattened groups consume exactly the fixed material-name table
-- low 16 bits of `packed_counts` equal submitted vertex count in every block
-- high 16 bits behave as a declared strip count but are not promoted to an exact semantic equality yet
-- packet size is 16-byte aligned and bounded
+`packed_counts & 0xffff` equals the exact submitted position count for every block.
 
-Flags have a perfect observed split:
+The high 16 bits remain a strip-related count under investigation. They never exceed the number of serialized negative-pair strip starts.
 
-- `0x00000107` — multi-object PSG blocks
-- `0x00ff010f` — single-object PSG blocks
+### Flags
 
-Across all 1,216 blocks, flag bit `0x8` is set if and only if the optional V4-8 stream is present. This correlation has zero failures and strongly identifies bit `0x8` as the V4-8 attribute-presence flag.
+Exactly four values occur:
 
-The remaining flag bits, the `0xff` field in the single-object value, and the `metric` field remain open.
+| Flags | Blocks | Hierarchy form | V4-8 |
+| ---: | ---: | --- | --- |
+| `0x00ff010f` | 18,614 | single-object | present |
+| `0x00ff0107` | 318 | single-object | absent |
+| `0x0000010f` | 7 | multi-object | present |
+| `0x00000107` | 3,236 | multi-object | absent |
+
+For every block:
+
+```text
+flags =
+    0x00000107
+  | (0x00000008 if V4-8 is present)
+  | (0x00ff0000 if the PSG has exactly one hierarchy object)
+```
+
+Bit `0x8` is therefore verified as the optional V4-8 attribute-presence bit.
+
+The engine-facing meaning of the `0xff` field and the `+0x08` float remain open.
 
 ## VIF geometry batches
 
-Across the 881-file sample:
+Every batch begins with one V4-32 header UNPACK.
 
-- material blocks: 1,216
-- MSCNT geometry batches: **18,965**
-- submitted positions: **250,514**
-
-Every batch begins with a one-vector V4-32 header UNPACK whose ADDR field is 0. FLG=1, so this and the following attribute destinations are relative to VIF1_TOPS rather than absolute VU addresses.
-
-Its payload is:
+The per-batch 16-byte header payload is:
 
 ```text
 u32 0x8000 | N
@@ -128,28 +164,34 @@ u32 0x00000412
 u32 0x00000000
 ```
 
-where `N` is the following per-element count.
+`N` is the following element count.
 
-Most batches then use:
+Only four geometry grammars occur across all **366,935** batches:
 
-```text
-V4-16  N elements
-V3-8   N elements
-V2-16  N elements
-V4-8   N elements   // optional
-MSCNT
-```
+| Position stream | V3-8 | V2-16 | V4-8 | Batches |
+| --- | --- | --- | --- | ---: |
+| V4-16 | yes | yes | yes | 126,732 |
+| V4-16 | yes | yes | no | 104,583 |
+| V4-32 | yes | yes | yes | 78,015 |
+| V4-32 | yes | yes | no | 57,605 |
 
-135 batches use V4-32 rather than V4-16 for their position stream.
+Totals:
 
-The UNPACK ADDR fields are contiguous for the per-element streams. All sampled geometry UNPACKs use FLG=1, so the sequence is VIF1_TOPS-relative.
+- V4-16 position batches: **231,315**
+- V4-32 position batches: **135,620**
+
+All geometry UNPACKs use FLG=1, so ADDR fields are relative to VIF1_TOPS.
+
+Header, position, V3-8 and V2-16 streams use USN=0. V4-8 uses USN=1.
+
+See `reference/ps2-vif.md`.
 
 ## Position decoding
 
 Position source values are signed integers:
 
-- V4-16 -> four signed s16 values
-- V4-32 -> four signed s32 values
+- V4-16 -> signed s16 x/y/z/w
+- V4-32 -> signed s32 x/y/z/w
 
 XYZ decode as:
 
@@ -157,74 +199,74 @@ XYZ decode as:
 position = position_origin + raw_xyz * position_scale
 ```
 
-This rule reproduces fixed PSG bounds within one position quantization unit for all 865 single-object files in the detailed sample and also reproduces multi-object V4-32 bounds.
+Across the complete corpus, 16,948 hierarchy descriptors receive submitted positions. Their decoded local bounds reproduce the stored center/half-extents within approximately **1.153 position quantization units** at worst.
 
-### W component
+994 hierarchy descriptors receive no submitted positions.
 
-For all 250,514 sampled submitted positions:
+## W tag: transform index and strip control
+
+All **4,869,177** position records satisfy:
+
+- W is nonzero
+- `abs(W)` is divisible by 16
+- the resulting hierarchy index is in range
+
+The transform index is:
 
 ```text
-object_index = abs(W) / 16 - 1
+transform_index = abs(W) / 16 - 1
 ```
 
-W is never zero, is always a multiple of 16 in magnitude, and always resolves to a valid hierarchy object.
+The sign controls triangle-strip seeding:
 
-The magnitude therefore provides object ownership.
-
-## Ordinary triangle strips
-
-For 877 ordinary PSGs:
-
-- two consecutive negative W records of the same object magnitude establish/restart a strip
-- each following positive W record emits the next triangle from the prior two positions
+- two consecutive negative W values seed/restart a strip
+- every subsequent positive W emits the next triangle
 - winding alternates
-- object ownership remains consistent
 
-The reconstruction produces zero structural topology warnings across those ordinary files.
+Complete-corpus topology result:
 
-The four `CableShadow*.psg` files do not obey this ordinary primitive rule and remain a special case.
+- serialized strip starts: **872,158**
+- reconstructed triangles: **3,124,861**
+- topology warnings: **0**
+
+W magnitude is a per-vertex hierarchy transform selector, not a rule that all vertices of one triangle must use the same transform.
+
+Evidence:
+
+- 10,243 strip seed pairs use different transform indices
+- 85,981 reconstructed triangles span multiple transforms
+
+This behavior occurs in articulated/cutscene/rider geometry and cable geometry.
 
 ## Other vertex streams
 
 ### V3-8
 
-All sampled V3-8 UNPACK commands use FLG=1 and USN=0. Decode as signed s8 xyz multiplied by `normal_scale`.
+V3-8 uses signed expansion and scale `1/127`.
 
-Geometric triangle normals align with averaged decoded vectors in ~99.775% of nondegenerate ordinary-triangle comparisons, strongly validating this as the normal stream.
+The earlier triangle-normal comparison strongly supports this as the normal-vector stream.
+
+Status: **VERIFIED serialization and signed scaling; strongly supported normal semantics**.
 
 ### V2-16
 
-All sampled V2-16 UNPACK commands use FLG=1 and USN=0. Signed 16-bit pairs multiplied by `1/2047` produce plausible tiled coordinate ranges.
+V2-16 uses signed expansion and scale `1/2047`.
 
-Current semantic status: **INFERRED texture-coordinate stream**.
+Status: **VERIFIED serialization and signed scaling; INFERRED texture-coordinate semantics**.
 
 ### V4-8
 
-Optional four-byte per-vertex stream.
+V4-8 uses unsigned expansion.
 
-All 17,787 sampled V4-8 UNPACK commands use FLG=1 and USN=1. Under the standard VIF UNPACK contract this means the source is zero-extended unsigned byte data.
+Full-corpus records: **2,709,497**.
 
-Across 234,318 records, observed channel minima are 0/0/0/0 and maxima are 127/127/127/79.
+All four byte channels reach both 0 and 255 somewhere in the corpus.
 
-Current semantic status: **VERIFIED unsigned V4-8 attribute; INFERRED color-like meaning**.
+Status: **VERIFIED unsigned V4-8 attribute; INFERRED color-like semantics**.
 
-## Material ownership
+## Multi-object remap tail
 
-A material block owns its VIF packet.
-
-The material name is:
-
-```text
-fixed_material_index =
-    sum(previous_lod_group_block_counts)
-  + material_slot
-```
-
-This mapping is structurally verified in every sampled payload.
-
-## Multi-object tail
-
-All 16 sampled multi-object PSGs and only those files carry a final remap record:
+All **1,035** multi-object PSGs and only those files contain:
 
 ```text
 u32 kind                  // 1
@@ -233,37 +275,38 @@ u8  object_indices[aligned_index_bytes]
 u32 object_count
 ```
 
-The active mapping bytes are the identity sequence `0..object_count-1` followed by zero padding.
+The active mapping is the identity sequence `0..object_count-1`, followed by zero padding.
 
-Its precise runtime purpose remains open.
+All **8,882** single-object PSGs omit this tail.
+
+## Material ownership
+
+Each material block owns its following VIF packet.
+
+Within each LOD group, `material_slot` is sequential. The fixed material table is the flattened sequence of group-local material slots.
 
 ## Cross-format validation
 
-Reconstructed render bounds for six POD01 engine subcomponents agree with:
+Earlier POD01 validation showed reconstructed PSG local bounds matching corresponding type-0 COL bounds to floating-point precision for six engine subcomponents.
 
-1. their PSG fixed-table bounds within one position quantization unit; and
-2. their matching type-0 COL bounds to approximately `7.2e-7` maximum error.
-
-This independently validates the position scale/origin reconstruction.
+The complete PSG corpus now independently validates the position scale/origin rule against stored PSG descriptor bounds.
 
 ## Tooling
 
 - `scripts/psg_inspect.py` — fixed-table validation
-- `scripts/psg_vif_inspect.py` — first VIF block inspection
-- `scripts/psg_mesh_extract.py` — detailed payload parsing and ordinary mesh reconstruction
+- `scripts/psg_vif_inspect.py` — VIF packet inspection
+- `scripts/psg_mesh_extract.py` — per-file render payload and strip reconstruction
+- `scripts/psg_corpus_verify.py` — multi-RES corpus verification
+- `raw/2026-10-08-psg-full-corpus-summary.txt` — complete retail aggregate
 
 ## Open questions
 
-- full 9,917-file detailed payload validation
-- material-block flag semantics
-- material-block `+0x08` metric
-- exact LOD selection metric
-- direct proof of V2-16 UV semantics
+- hierarchy matrix composition for assembled/articulated geometry
+- VU microprogram used by MSCNT
+- GIF/GS submission and render-state generation
+- exact semantic identity of material-block `+0x08`
+- exact runtime LOD-selection metric
+- direct proof of V2-16 texture coordinates
 - V4-8 channel semantics
-- CableShadow primitive format
-- VU microprogram
-- GIF/GS output and material render state
-
-## VIF control-bit reference
-
-The UNPACK FLG/USN interpretation used here is recorded in `reference/ps2-vif.md`. Earlier notes that described ADDR 0/1/... as absolute VU addresses are superseded by the TOPS-relative interpretation.
+- exact meaning of the `0xff` single-object flag field
+- exact pre-batching meaning of `packed_counts >> 16`

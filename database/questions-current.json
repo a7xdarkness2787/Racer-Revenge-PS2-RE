@@ -3,16 +3,25 @@
   "canonical_target_sha256": "c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30",
   "questions": [
     {
+      "id": "PSG-HIERARCHY-001",
+      "priority": "highest",
+      "subsystem": "renderer/geometry",
+      "status": "OPEN",
+      "question": "What exact matrix convention and parent-composition order converts transform-indexed local PSG vertices into assembled model space?",
+      "evidence": [
+        "formats/PSG.md",
+        "analysis/2026-10-08-psg-full-corpus.md"
+      ]
+    },
+    {
       "id": "PSG-VU-001",
       "priority": "highest",
       "subsystem": "renderer/PS2",
       "status": "OPEN",
-      "question": "Which VU microprogram consumes the recovered VIF1_TOPS-relative PSG geometry layout, and how does it produce GIF/GS submission state?",
+      "question": "Which VU microprogram consumes the recovered PSG VIF geometry layout, and how does it produce GIF/GS submission state?",
       "evidence": [
         "formats/PSG.md",
-        "analysis/2026-10-08-psg-mesh-reconstruction.md",
-        "executable/psx_surface_geometry.md",
-        "reference/ps2-vif.md"
+        "executable/psx_surface_geometry.md"
       ]
     },
     {
@@ -20,11 +29,10 @@
       "priority": "high",
       "subsystem": "renderer/geometry",
       "status": "PARTIAL",
-      "question": "What are the remaining bit meanings of material-block flags 0x00000107 and 0x00ff010f, and what is the +0x08 float metric? Bit 0x8 is verified as V4-8 attribute presence.",
+      "question": "What is the +0x08 material-block float, what does the 0xff single-object field mean, and what exact pre-batching count is stored in packed_counts high 16 bits?",
       "evidence": [
         "formats/PSG.md",
-        "records/2026-10-08-vif-unpack-flags.md",
-        "raw/2026-10-08-psg-render-summary.txt"
+        "analysis/2026-10-08-psg-full-corpus.md"
       ]
     },
     {
@@ -32,10 +40,9 @@
       "priority": "high",
       "subsystem": "renderer/geometry",
       "status": "PARTIAL",
-      "question": "Can V2-16 be tied directly to texture coordinates and the verified unsigned V4-8 stream to specific color channels/render semantics?",
+      "question": "Can V2-16 be tied directly to texture coordinates and V4-8 to specific render/color channel semantics?",
       "evidence": [
         "formats/PSG.md",
-        "analysis/2026-10-08-psg-mesh-reconstruction.md",
         "reference/ps2-vif.md"
       ]
     },
@@ -44,31 +51,8 @@
       "priority": "high",
       "subsystem": "renderer/geometry",
       "status": "PARTIAL",
-      "question": "What runtime quantity is compared with the verified 0.18, 0.36 and 0.50 LOD thresholds?",
-      "evidence": [
-        "formats/PSG.md"
-      ]
-    },
-    {
-      "id": "PSG-CABLE-001",
-      "priority": "high",
-      "subsystem": "renderer/geometry",
-      "status": "OPEN",
-      "question": "What special primitive or VU path is used by the four CableShadow PSG resources?",
-      "evidence": [
-        "analysis/2026-10-08-psg-mesh-reconstruction.md"
-      ]
-    },
-    {
-      "id": "PSG-CORPUS-001",
-      "priority": "medium",
-      "subsystem": "renderer/geometry",
-      "status": "OPEN",
-      "question": "Do the detailed render-payload rules validated on POD01/TA/TB hold across all 9,917 retail PSG resources?",
-      "evidence": [
-        "reference/corpus-summary.json",
-        "scripts/psg_mesh_extract.py"
-      ]
+      "question": "What runtime quantity is compared with the recovered approximately 0.18, 0.36 and 0.50 pod LOD thresholds?",
+      "evidence": ["formats/PSG.md"]
     },
     {
       "id": "COL-S16-001",
@@ -76,10 +60,7 @@
       "subsystem": "collision",
       "status": "OPEN",
       "question": "What exact scale/dequantization rule converts the signed-16 collision vertex encoding used by 11 static collision bodies?",
-      "evidence": [
-        "formats/COL.md",
-        "executable/collision_loader.md"
-      ]
+      "evidence": ["formats/COL.md", "executable/collision_loader.md"]
     },
     {
       "id": "POD-UPGRADE-001",
@@ -87,10 +68,7 @@
       "subsystem": "vehicle physics/upgrades",
       "status": "OPEN",
       "question": "How are A/B/C authored pod values selected or interpolated at runtime for thrust, top speed, defense, repair and cooling?",
-      "evidence": [
-        "formats/PHY.md",
-        "executable/pod_track_loaders.md"
-      ]
+      "evidence": ["formats/PHY.md", "executable/pod_track_loaders.md"]
     },
     {
       "id": "TRACK-PROGRESS-001",
@@ -98,10 +76,7 @@
       "subsystem": "race logic/AI",
       "status": "OPEN",
       "question": "How do TunnelTrack branch arrays, progress-node lists and packed node flags feed lap/checkpoint validation and AI path decisions?",
-      "evidence": [
-        "formats/SPL.md",
-        "executable/pod_track_loaders.md"
-      ]
+      "evidence": ["formats/SPL.md", "executable/pod_track_loaders.md"]
     },
     {
       "id": "RUNTIME-ORACLE-001",
@@ -109,9 +84,7 @@
       "subsystem": "runtime validation",
       "status": "OPEN",
       "question": "What is the smallest stable PCSX2 capture contract for reproducing loader, physics, race and renderer state from the canonical retail build?",
-      "evidence": [
-        "runtime_oracle/README.md"
-      ]
+      "evidence": ["runtime_oracle/README.md"]
     },
     {
       "id": "RES-V2-001",
@@ -119,10 +92,7 @@
       "subsystem": "resource containers",
       "status": "OPEN",
       "question": "What are the executable-supported RES version-2 layout differences, if a suitable fixture can be found?",
-      "evidence": [
-        "formats/RES.md",
-        "executable/resource_loader.md"
-      ]
+      "evidence": ["formats/RES.md", "executable/resource_loader.md"]
     }
   ]
 }

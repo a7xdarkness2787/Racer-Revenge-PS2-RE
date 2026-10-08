@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Parse and reconstruct ordinary Racer Revenge PS2 PSG mesh payloads.
+"""Parse and reconstruct Racer Revenge PS2 PSG render payloads.
 
 The tool expects an extracted .psg supplied by the user. It never downloads or
-contains retail game data. CableShadow resources use a special topology and are
-reported but not exported as ordinary strips unless --allow-special is given.
+contains retail game data. Serialized strip topology is reconstructed from the
+sign of the position W tag. The W magnitude selects a hierarchy transform.
+OBJ export is intentionally limited to one-transform geometry until hierarchy
+matrix application is independently validated.
 """
 from __future__ import annotations
 
@@ -179,12 +181,12 @@ def decode_packet(packet: bytes, objects, scales, origin, material, lod, block):
                 raise PsgError(f"unexpected position UNPACK {p['base']:#x}")
             if w == 0 or abs(w) % 16:
                 raise PsgError(f"invalid position W tag {w}")
-            object_index = abs(w) // 16 - 1
-            if not 0 <= object_index < len(objects):
-                raise PsgError(f"object index {object_index} out of range")
+            transform_index = abs(w) // 16 - 1
+            if not 0 <= transform_index < len(objects):
+                raise PsgError(f"hierarchy transform index {transform_index} out of range")
             vertices.append({
                 "position": [origin[0]+x*position_scale, origin[1]+y*position_scale, origin[2]+z*position_scale],
-                "object_index": object_index,
+                "transform_index": transform_index,
                 "w": w,
                 "material": material,
             })
@@ -196,23 +198,35 @@ def decode_packet(packet: bytes, objects, scales, origin, material, lod, block):
             colors.append(list(struct.unpack_from("<4B", color["data"], i*4)) if color else None)
 
         run_start = None
-        active_object = None
         for i,w in enumerate(tags):
-            if i + 1 < len(tags) and w < 0 and tags[i+1] < 0 and abs(w) == abs(tags[i+1]):
+            # The first two vertices of each serialized strip carry negative W.
+            # Transform indices may differ; animated/skinned geometry can span
+            # multiple hierarchy transforms inside one triangle strip.
+            if i + 1 < len(tags) and w < 0 and tags[i+1] < 0:
                 run_start = i
-                active_object = abs(w)//16 - 1
                 strips += 1
             if w <= 0:
                 continue
-            obj = abs(w)//16 - 1
-            if run_start is None or i < run_start+2 or obj != active_object or abs(tags[i-1]) != abs(w) or abs(tags[i-2]) != abs(w):
+            if run_start is None or i < run_start + 2:
                 warnings.append({"batch": batch_id, "vertex": i, "w": w})
                 continue
             tri = i - (run_start + 2)
             a,b,c = base_vertex+i-2, base_vertex+i-1, base_vertex+i
             if tri & 1:
                 a,b = b,a
-            faces.append({"indices":[a,b,c], "object_index":obj, "material":material, "lod":lod, "block":block})
+            transform_indices = [
+                abs(tags[i-2]) // 16 - 1,
+                abs(tags[i-1]) // 16 - 1,
+                abs(tags[i]) // 16 - 1,
+            ]
+            faces.append({
+                "indices":[a,b,c],
+                "transform_indices":transform_indices,
+                "mixed_transforms":len(set(transform_indices)) > 1,
+                "material":material,
+                "lod":lod,
+                "block":block,
+            })
 
     return {"vertices":vertices,"normals":normals,"uvs":uvs,"colors":colors,"faces":faces,
             "batch_count":batches,"strip_starts":strips,"topology_warnings":warnings}
@@ -306,7 +320,9 @@ def summary(result):
                            "observed_strip_starts":block["strip_starts"],"vertices":len(block["vertices"]),
                            "triangles":len(block["faces"]),"batches":block["batch_count"],
                            "packet_size":block["packet_size"],"bounds_center":center,
-                           "bounds_half_extents":half,"topology_warnings":len(block["topology_warnings"])})
+                           "bounds_half_extents":half,
+                           "mixed_transform_triangles":sum(1 for f in block["faces"] if f["mixed_transforms"]),
+                           "topology_warnings":len(block["topology_warnings"])})
         lods.append({"index":li,"threshold":lod["threshold"],"block_count":lod["block_count"],"blocks":blocks})
     return {"object_count":len(result["objects"]),"material_count":len(result["materials"]),
             "position_scale":result["position_scale"],"normal_scale":result["normal_scale"],
@@ -314,14 +330,31 @@ def summary(result):
             "lod_count":len(result["lods"]),"lods":lods,"object_remap":result["object_remap"]}
 
 
-def write_obj(result, output: Path, lod_index: int, allow_special: bool):
+def write_obj(result, output: Path, lod_index: int):
     if not 0 <= lod_index < len(result["lods"]):
         raise PsgError("LOD out of range")
     lod=result["lods"][lod_index]
     warning_count=sum(len(b["topology_warnings"]) for b in lod["blocks"])
-    if warning_count and not allow_special:
-        raise PsgError(f"LOD has {warning_count} topology warnings; special primitive path not decoded")
-    lines=["# Independently reconstructed from a user-supplied PSG."]
+    if warning_count:
+        raise PsgError(f"LOD has {warning_count} topology warnings")
+    used_transforms = {
+        v["transform_index"]
+        for block in lod["blocks"]
+        for v in block["vertices"]
+    }
+    if len(used_transforms) != 1:
+        raise PsgError(
+            "OBJ export currently requires one hierarchy transform; "
+            "matrix application for articulated geometry is still under validation"
+        )
+    only_transform = next(iter(used_transforms))
+    lines=[
+        "# Independently reconstructed from a user-supplied PSG.",
+        "# Coordinates are local to hierarchy transform "
+        + str(only_transform)
+        + ": "
+        + result["objects"][only_transform]["name"],
+    ]
     bases=[]
     total=0
     for block in lod["blocks"]:
@@ -335,9 +368,9 @@ def write_obj(result, output: Path, lod_index: int, allow_special: bool):
     for bi,block in enumerate(lod["blocks"]):
         base=bases[bi]
         for face in block["faces"]:
-            name=result["objects"][face["object_index"]]["name"] or f"object_{face['object_index']}"
             mtl=block["material"] or f"material_{bi}"
-            if name != group:
+            if group is None:
+                name=result["objects"][only_transform]["name"] or f"transform_{only_transform}"
                 lines.append("g " + name.replace(" ","_")); group=name
             if mtl != material:
                 lines.append("usemtl " + mtl.replace(" ","_")); material=mtl
@@ -352,11 +385,10 @@ def main():
     ap.add_argument("--json",action="store_true")
     ap.add_argument("--obj",type=Path)
     ap.add_argument("--lod",type=int,default=0)
-    ap.add_argument("--allow-special",action="store_true")
     args=ap.parse_args()
     result=parse(args.psg.read_bytes())
     if args.obj:
-        write_obj(result,args.obj,args.lod,args.allow_special)
+        write_obj(result,args.obj,args.lod)
     row=summary(result)
     if args.json:
         print(json.dumps(row,indent=2))

@@ -28,57 +28,40 @@ The standalone research tree was organized around the evidence-first layout used
 
 ## 2026-10-07 — First PSG VIF payload block verified
 
-All 881 sampled first PSG packets begin with the same VIF anchor and decode without unknown command or packet-boundary failure.
+A POD01/TA/TB sample established the initial VIF packet grammar and executable VIF anchors.
 
-## 2026-10-07 — PSG VIF geometry grammar recovered
+## 2026-10-08 — PSG position scale and sample strip topology recovered
 
-The first-packet work established MSCNT-terminated geometry batches, contiguous VU destinations and repeated V4/V3/V2 attribute streams.
+The sampled payload established position dequantization, hierarchy W tags, material grouping and independent PSG/COL bounds checks.
 
-## 2026-10-08 — PSG payload parsed end-to-end in the canonical sample
+## 2026-10-08 — VIF UNPACK control bits verified
 
-**Status:** VERIFIED sample serialization
+FLG/USN interpretation was checked against PS2SDK and the sampled packets. V4-8 was established as unsigned source data and material-block bit `0x8` as its presence flag.
 
-All 881 PSGs from POD01, TA and TB are now consumed through the render header, LOD groups, 1,216 material blocks, VIF packets and optional multi-object remap tail.
+## 2026-10-08 — Complete PSG render corpus validated
 
-No unexplained payload bytes remain in this sample.
+**Status:** VERIFIED
 
-## 2026-10-08 — Position/object encoding and ordinary mesh topology recovered
+Detailed parsing was expanded to all 9,917 PSG resources in all 103 RES containers.
 
-**Status:** VERIFIED sample behavior
+Totals:
 
-Signed V4-16 and V4-32 position data decode as `origin + raw * position_scale`.
+- 22,175 material/VIF blocks
+- 366,935 geometry batches
+- 4,869,177 positions
+- 3,124,861 reconstructed triangles
+- 0 payload parse failures
+- 0 unexplained payload bytes
 
-Position W encodes hierarchy object ownership as `abs(W)/16 - 1`.
+## 2026-10-08 — PSG topology interpretation corrected
 
-Negative W pairs restart/setup ordinary triangle strips and positive W records emit triangles with alternating winding. The rule has zero structural warnings across 877 ordinary PSGs.
+Full-corpus animated/cutscene/cable geometry invalidated the earlier same-transform-per-triangle restriction.
 
-The four CableShadow resources are retained as an explicit special case.
+Correct interpretation:
 
-## 2026-10-08 — Independent mesh and collision-bounds validation
+- W sign seeds/restarts strips
+- W magnitude selects a hierarchy transform per vertex
 
-A private OBJ reconstruction from POD01 geometry loaded successfully in an independent mesh library.
+The corrected rule has zero topology warnings across the complete corpus.
 
-Six POD01 PSG components were cross-checked against corresponding type-0 COL resources. Reconstructed PSG bounds, fixed PSG bounds and COL bounds agree within quantization/floating-point precision.
-
-Retail-derived OBJ data remains outside Git.
-
-Evidence:
-- `analysis/2026-10-08-psg-mesh-reconstruction.md`
-- `records/2026-10-08-psg-render-payload.md`
-- `formats/PSG.md`
-- `raw/2026-10-08-psg-render-summary.txt`
-
-## 2026-10-08 — VIF signedness and TOPS-relative addressing verified
-
-**Status:** VERIFIED sample behavior
-
-All 18,965 sampled geometry batches use FLG=1 on their UNPACK commands, so the recovered ADDR sequence is relative to VIF1_TOPS rather than absolute VU memory.
-
-Positions, V3-8 normals and V2-16 coordinate-like data use USN=0. The optional V4-8 stream uses USN=1 in 17,787/17,787 cases and is therefore unsigned byte data.
-
-Material-block flag bit `0x8` is set if and only if that V4-8 stream is present across all 1,216 sampled blocks.
-
-Evidence:
-- `records/2026-10-08-vif-unpack-flags.md`
-- `reference/ps2-vif.md`
-- `formats/PSG.md`
+This correction is preserved in the dated research record rather than silently replacing the earlier interpretation.

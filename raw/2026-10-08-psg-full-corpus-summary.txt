@@ -1,0 +1,83 @@
+Canonical target:
+SLUS_202.68
+SHA-256 c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30
+
+Full detailed PSG validation:
+RES containers: 103
+PSG files: 9,917
+detailed parses successful: 9,917
+parse failures: 0
+unexplained payload bytes: 0
+
+Hierarchy/material:
+object descriptors: 17,942
+material-name records: 22,175
+material blocks: 22,175
+single-object PSGs: 8,882
+multi-object PSGs: 1,035
+multi-object identity tails: 1,035
+tail failures: 0
+
+Render header:
+normal_scale == 1/127: 9,917 / 9,917
+uv_scale_u == uv_scale_v == 1/2047: 9,917 / 9,917
+origin flag 0 + zero origin: 8,565
+origin flag 1 + nonzero origin: 1,352
+origin correlation failures: 0
+
+LOD:
+one-group PSGs: 9,846
+four-group PSGs: 71
+four-group composition: 69 major pod chariot/engine meshes + POD02 extra engine pair
+finite thresholds: ~0.18, ~0.36, 0.50, FLT_MAX
+
+Material block flags:
+0x00ff010f: 18,614  single-object, V4-8 present
+0x00ff0107:    318  single-object, V4-8 absent
+0x0000010f:      7  multi-object,  V4-8 present
+0x00000107:  3,236  multi-object,  V4-8 absent
+flags bit 0x8 <-> V4-8 presence: 22,175 / 22,175
+
+VIF geometry:
+batches: 366,935
+submitted positions: 4,869,177
+V4-16 position batches: 231,315
+V4-32 position batches: 135,620
+
+Batch grammars:
+V4-16 + V3-8 + V2-16 + V4-8 + MSCNT: 126,732
+V4-16 + V3-8 + V2-16 + MSCNT:        104,583
+V4-32 + V3-8 + V2-16 + V4-8 + MSCNT:  78,015
+V4-32 + V3-8 + V2-16 + MSCNT:         57,605
+
+VIF control:
+header/position/V3-8/V2-16: FLG=1, USN=0
+V4-8: FLG=1, USN=1
+V4-8 records: 2,709,497
+V4-8 channel minima: 0,0,0,0
+V4-8 channel maxima: 255,255,255,255
+
+Position W:
+records checked: 4,869,177
+zero W: 0
+abs(W) not divisible by 16: 0
+out-of-range transform index: 0
+transform_index = abs(W)/16 - 1
+
+General triangle-strip topology:
+serialized strip starts: 872,158
+reconstructed triangles: 3,124,861
+topology warnings: 0
+mixed-transform seed pairs: 10,243
+mixed-transform triangles: 85,981
+
+Hierarchy local bounds:
+populated descriptors: 16,948
+descriptors without submitted positions: 994
+max fixed-bound error / position_scale: ~1.153
+
+packed_counts high 16 bits vs serialized strip starts:
+equal: 18,034 / 22,175 blocks
+smaller: 4,141 / 22,175 blocks
+never larger
+maximum difference: 182

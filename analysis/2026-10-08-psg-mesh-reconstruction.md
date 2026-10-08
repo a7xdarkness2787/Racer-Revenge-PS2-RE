@@ -1,5 +1,7 @@
 # PSG mesh reconstruction — 2026-10-08
 
+> **SUPERSEDED TOPOLOGY INTERPRETATION:** The same-transform-per-triangle restriction in this sample-era note was invalidated by the complete 9,917-file corpus. The corrected rule uses W sign for strip seeding/restart and W magnitude as a per-vertex hierarchy transform index. See `analysis/2026-10-08-psg-full-corpus.md` and `records/2026-10-08-psg-full-corpus.md`. The sample measurements below are retained as historical evidence.
+
 **Canonical executable:** `SLUS_202.68`  
 **SHA-256:** `c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30`  
 **Status:** VERIFIED for the 881-file POD01/TA/TB payload sample, except where explicitly marked INFERRED  

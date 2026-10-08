@@ -2,58 +2,52 @@
 
 ## Active investigation
 
-Follow the independently reconstructed PSG mesh data into the VU/material submission path and close the remaining render-format exceptions.
+Move from fully parsed PSG serialization into assembled hierarchy transforms and the VU/material/GIF/GS execution path.
 
 ## Latest development
 
-The detailed POD01/TA/TB sample is now parsed end-to-end: **881 PSG files, 0 file-level failures, and no unexplained bytes after the known optional tail**.
+Detailed PSG validation is now complete across all **9,917** retail PSG resources.
 
-The renderer-side serialization is substantially clearer:
+The complete corpus confirms:
 
 - 0x24-byte render header
-- one or more LOD groups
+- one or four LOD groups
 - 0x14-byte material-block headers
-- VIF packets
-- optional multi-object identity remap tail
+- exactly four VIF geometry batch grammars
+- signed V4-16/V4-32 position decoding
+- per-vertex hierarchy transform indices in W magnitude
+- strip seed/restart state in W sign
+- signed V3-8 and V2-16 streams
+- unsigned optional V4-8 stream
+- identity remap tails on every multi-object file
+- no unexplained payload bytes
 
-Position reconstruction is now verified:
+The corrected sign-only strip rule reconstructs **3,124,861 triangles** with zero topology warnings.
 
-```text
-xyz = position_origin + signed_raw_xyz * position_scale
-object_index = abs(W) / 16 - 1
-```
-
-Ordinary triangle strips are reconstructed from the W sign with alternating winding. The rule validates with zero structural topology warnings in 877 ordinary PSGs.
-
-V3-8 data is strongly validated as normal vectors. VIF control bits now independently confirm signed expansion for positions/normals/V2-16 and unsigned expansion for V4-8. All geometry UNPACK destinations are FLG=1 and therefore VIF1_TOPS-relative. V2-16 remains texture-coordinate-like and V4-8 remains color-like until direct render-state correlation is complete.
-
-The four `CableShadow*.psg` files are the known special topology exception.
-
-Six POD01 render components now cross-check against matching type-0 COL bounds to floating-point precision.
+A previous same-transform restriction was invalidated by full-corpus cutscene/rider/cable geometry. Mixed-transform triangles are valid serialized geometry.
 
 ## Current evidence
 
 - `formats/PSG.md`
-- `analysis/2026-10-08-psg-mesh-reconstruction.md`
-- `records/2026-10-08-psg-render-payload.md`
-- `executable/psx_surface_geometry.md`
+- `analysis/2026-10-08-psg-full-corpus.md`
+- `records/2026-10-08-psg-full-corpus.md`
+- `raw/2026-10-08-psg-full-corpus-summary.txt`
 - `scripts/psg_mesh_extract.py`
-- `raw/2026-10-08-psg-render-summary.txt`
-- `reference/corpus-summary.json`
+- `scripts/psg_corpus_verify.py`
 - `reference/ps2-vif.md`
-- `records/2026-10-08-vif-unpack-flags.md`
+- `executable/psx_surface_geometry.md`
 
 ## Immediate queue
 
-- identify the VU microprogram reached by the geometry MSCNT path
-- map the remaining material-block flag bits; bit `0x8` is now verified as V4-8-presence
-- identify the material-block `+0x08` float
-- prove V2-16 texture-coordinate semantics against texture/material use
+- determine hierarchy matrix multiplication/order for transform-indexed vertices
+- reconstruct an articulated rider/cutscene model in bind pose
+- identify the VU microprogram reached by MSCNT
+- map the material-block `+0x08` float
+- determine the runtime metric compared with the pod LOD thresholds
+- tie V2-16 coordinates directly to material/texture state
 - identify V4-8 channel semantics
-- decode the four CableShadow PSGs without forcing the ordinary strip rule
-- determine the runtime metric compared with 0.18/0.36/0.50 LOD thresholds
-- expand detailed payload validation from the 881-file sample toward all 9,917 PSG resources
-- start retained PCSX2 geometry/runtime capture once the VU/material path is stable
+- trace GIF/GS output
+- start a retained PCSX2 runtime capture once the hierarchy/VU path is stable
 
 ## Documentation contract
 
