@@ -124,9 +124,11 @@ Block flags have a perfect structural split:
 - `0x00000107`: all 54 blocks from the 16 multi-object PSGs
 - `0x00ff010f`: all 1,162 blocks from the 865 single-object PSGs
 
-No exceptions occur. The bit meanings remain open.
+No exceptions occur.
 
-The float at `+0x08` remains unnamed.
+A second pass over VIF control bits establishes one flag meaning: material-block bit `0x8` is set if and only if the optional V4-8 stream is present, with 0 failures across all 1,216 blocks.
+
+The remaining flag bits and the float at `+0x08` remain unnamed.
 
 ## VERIFIED — VIF population
 
@@ -150,6 +152,26 @@ Command totals:
 | `0x6e` V4-8 | 17,787 |
 
 The extra 135 V4-32 commands are full-width position streams; the remaining 18,965 are the per-batch header upload.
+
+### VIF UNPACK control bits
+
+Using the standard PS2 VIF UNPACK immediate layout:
+
+- ADDR: bits 0..9
+- USN: bit 14
+- FLG: bit 15
+
+the complete sample shows:
+
+- batch header: FLG=1, USN=0 — 18,965/18,965
+- position: FLG=1, USN=0 — 18,965/18,965
+- V3-8 normal: FLG=1, USN=0 — 18,965/18,965
+- V2-16 coordinate: FLG=1, USN=0 — 18,965/18,965
+- V4-8 optional attribute: FLG=1, USN=1 — 17,787/17,787
+
+This corrects the earlier shorthand “VU address 0/1/...”: FLG=1 makes the observed ADDR sequence relative to VIF1_TOPS.
+
+USN=1 also proves the V4-8 source is unsigned byte data.
 
 ## VERIFIED — position decoding
 
@@ -218,7 +240,7 @@ This strongly validates V3-8 as a normal vector stream.
 
 The V2-16 stream, scaled by `1/2047`, produces plausible tiled coordinate ranges and remains **INFERRED** as texture coordinates pending material/texture correlation.
 
-The optional V4-8 stream remains **INFERRED** as color-like data.
+The optional V4-8 stream is **VERIFIED unsigned byte data** under VIF semantics and remains **INFERRED** as color-like data. Across 234,318 sampled records its four channel maxima are 127/127/127/79.
 
 ## VERIFIED — material ownership
 
@@ -293,7 +315,7 @@ Track PSG/COL pairs often differ in center because render data can carry a world
 
 ## Open questions
 
-- exact semantics of material-block flags
+- exact semantics of material-block flag bits other than the verified V4-8-presence bit `0x8`
 - semantic identity of the block `+0x08` float
 - exact runtime LOD comparison metric
 - proof of V2-16 texture coordinates through texture/material use
@@ -306,3 +328,7 @@ Track PSG/COL pairs often differ in center because render data can carry a world
 ## Reproduction
 
 Use `scripts/psg_mesh_extract.py` against a user-supplied extracted PSG. It parses the payload, validates counts and ownership, reconstructs ordinary strip geometry, summarizes LOD/material blocks and can export a selected LOD as OBJ for private validation.
+
+## Public VIF reference
+
+The FLG/USN interpretation is sourced from the PS2SDK VIF definitions and is summarized in `reference/ps2-vif.md`.

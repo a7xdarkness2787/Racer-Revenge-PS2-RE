@@ -67,3 +67,18 @@ Evidence:
 - `records/2026-10-08-psg-render-payload.md`
 - `formats/PSG.md`
 - `raw/2026-10-08-psg-render-summary.txt`
+
+## 2026-10-08 — VIF signedness and TOPS-relative addressing verified
+
+**Status:** VERIFIED sample behavior
+
+All 18,965 sampled geometry batches use FLG=1 on their UNPACK commands, so the recovered ADDR sequence is relative to VIF1_TOPS rather than absolute VU memory.
+
+Positions, V3-8 normals and V2-16 coordinate-like data use USN=0. The optional V4-8 stream uses USN=1 in 17,787/17,787 cases and is therefore unsigned byte data.
+
+Material-block flag bit `0x8` is set if and only if that V4-8 stream is present across all 1,216 sampled blocks.
+
+Evidence:
+- `records/2026-10-08-vif-unpack-flags.md`
+- `reference/ps2-vif.md`
+- `formats/PSG.md`

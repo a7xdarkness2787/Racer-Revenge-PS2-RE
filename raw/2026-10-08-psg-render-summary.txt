@@ -92,3 +92,18 @@ englt1a.psg LOD0
 01_2: 18 vertices, 4 strips, 10 triangles
 01_3: 8 vertices, 2 strips, 4 triangles
 private generated OBJ loaded successfully; OBJ not committed
+
+VIF UNPACK control bits:
+header FLG=1 USN=0: 18,965/18,965
+position FLG=1 USN=0: 18,965/18,965
+V3-8 FLG=1 USN=0: 18,965/18,965
+V2-16 FLG=1 USN=0: 18,965/18,965
+V4-8 FLG=1 USN=1: 17,787/17,787
+
+Material flag/V4-8 correlation:
+blocks checked: 1,216
+(flags & 0x8) == V4-8-present: 1,216/1,216
+
+Unsigned V4-8 records: 234,318
+channel minima: 0,0,0,0
+channel maxima: 127,127,127,79

@@ -105,7 +105,9 @@ Flags have a perfect observed split:
 - `0x00000107` — multi-object PSG blocks
 - `0x00ff010f` — single-object PSG blocks
 
-The individual flag bits and `metric` field remain unknown.
+Across all 1,216 blocks, flag bit `0x8` is set if and only if the optional V4-8 stream is present. This correlation has zero failures and strongly identifies bit `0x8` as the V4-8 attribute-presence flag.
+
+The remaining flag bits, the `0xff` field in the single-object value, and the `metric` field remain open.
 
 ## VIF geometry batches
 
@@ -115,7 +117,7 @@ Across the 881-file sample:
 - MSCNT geometry batches: **18,965**
 - submitted positions: **250,514**
 
-Every batch begins with a one-vector V4-32 header upload to VU address 0.
+Every batch begins with a one-vector V4-32 header UNPACK whose ADDR field is 0. FLG=1, so this and the following attribute destinations are relative to VIF1_TOPS rather than absolute VU addresses.
 
 Its payload is:
 
@@ -140,7 +142,7 @@ MSCNT
 
 135 batches use V4-32 rather than V4-16 for their position stream.
 
-VU destinations are contiguous for the per-element streams.
+The UNPACK ADDR fields are contiguous for the per-element streams. All sampled geometry UNPACKs use FLG=1, so the sequence is VIF1_TOPS-relative.
 
 ## Position decoding
 
@@ -186,13 +188,13 @@ The four `CableShadow*.psg` files do not obey this ordinary primitive rule and r
 
 ### V3-8
 
-Decode as signed s8 xyz multiplied by `normal_scale`.
+All sampled V3-8 UNPACK commands use FLG=1 and USN=0. Decode as signed s8 xyz multiplied by `normal_scale`.
 
 Geometric triangle normals align with averaged decoded vectors in ~99.775% of nondegenerate ordinary-triangle comparisons, strongly validating this as the normal stream.
 
 ### V2-16
 
-Signed 16-bit pairs multiplied by `1/2047` produce plausible tiled coordinate ranges.
+All sampled V2-16 UNPACK commands use FLG=1 and USN=0. Signed 16-bit pairs multiplied by `1/2047` produce plausible tiled coordinate ranges.
 
 Current semantic status: **INFERRED texture-coordinate stream**.
 
@@ -200,7 +202,11 @@ Current semantic status: **INFERRED texture-coordinate stream**.
 
 Optional four-byte per-vertex stream.
 
-Current semantic status: **INFERRED color-like stream**.
+All 17,787 sampled V4-8 UNPACK commands use FLG=1 and USN=1. Under the standard VIF UNPACK contract this means the source is zero-extended unsigned byte data.
+
+Across 234,318 records, observed channel minima are 0/0/0/0 and maxima are 127/127/127/79.
+
+Current semantic status: **VERIFIED unsigned V4-8 attribute; INFERRED color-like meaning**.
 
 ## Material ownership
 
@@ -257,3 +263,7 @@ This independently validates the position scale/origin reconstruction.
 - CableShadow primitive format
 - VU microprogram
 - GIF/GS output and material render state
+
+## VIF control-bit reference
+
+The UNPACK FLG/USN interpretation used here is recorded in `reference/ps2-vif.md`. Earlier notes that described ADDR 0/1/... as absolute VU addresses are superseded by the TOPS-relative interpretation.

@@ -64,8 +64,10 @@ Detailed POD01/TA/TB render-payload evidence:
 - `scripts/psg_mesh_extract.py`
 - `executable/psx_surface_geometry.md`
 - `raw/2026-10-08-psg-render-summary.txt`
+- `records/2026-10-08-vif-unpack-flags.md`
+- `reference/ps2-vif.md`
 
-The 881-file detailed sample now has closed serialization, decoded position scale/origin, hierarchy object tags, ordinary strip topology, LOD/material grouping and independent PSG/COL bounds validation.
+The 881-file detailed sample now has closed serialization, decoded position scale/origin, hierarchy object tags, ordinary strip topology, LOD/material grouping, VIF signedness/TOPS-relative addressing, and independent PSG/COL bounds validation.
 
 The active renderer frontier is VU/material/GIF/GS behavior, CableShadow special geometry, and expansion of detailed payload validation toward all 9,917 PSG resources.
 

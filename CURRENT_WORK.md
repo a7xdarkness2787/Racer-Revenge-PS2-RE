@@ -25,7 +25,7 @@ object_index = abs(W) / 16 - 1
 
 Ordinary triangle strips are reconstructed from the W sign with alternating winding. The rule validates with zero structural topology warnings in 877 ordinary PSGs.
 
-V3-8 data is strongly validated as normal vectors. V2-16 remains texture-coordinate-like and V4-8 remains color-like until direct render-state correlation is complete.
+V3-8 data is strongly validated as normal vectors. VIF control bits now independently confirm signed expansion for positions/normals/V2-16 and unsigned expansion for V4-8. All geometry UNPACK destinations are FLG=1 and therefore VIF1_TOPS-relative. V2-16 remains texture-coordinate-like and V4-8 remains color-like until direct render-state correlation is complete.
 
 The four `CableShadow*.psg` files are the known special topology exception.
 
@@ -40,11 +40,13 @@ Six POD01 render components now cross-check against matching type-0 COL bounds t
 - `scripts/psg_mesh_extract.py`
 - `raw/2026-10-08-psg-render-summary.txt`
 - `reference/corpus-summary.json`
+- `reference/ps2-vif.md`
+- `records/2026-10-08-vif-unpack-flags.md`
 
 ## Immediate queue
 
 - identify the VU microprogram reached by the geometry MSCNT path
-- map material-block flags `0x107` and `0xff010f`
+- map the remaining material-block flag bits; bit `0x8` is now verified as V4-8-presence
 - identify the material-block `+0x08` float
 - prove V2-16 texture-coordinate semantics against texture/material use
 - identify V4-8 channel semantics

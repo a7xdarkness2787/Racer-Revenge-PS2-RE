@@ -153,9 +153,20 @@ def decode_packet(packet: bytes, objects, scales, origin, material, lod, block):
         p, n, uv = batch[1], batch[2], batch[3]
         if any(cmd["num"] != count for cmd in (p,n,uv)) or n["base"] != 0x6A or uv["base"] != 0x65:
             raise PsgError("attribute stream mismatch")
+
+        # All sampled geometry UNPACKs use FLG=1, so ADDR is TOPS-relative.
+        # Positions/normals/UVs use signed expansion (USN=0).
+        for label, cmd in (("header", batch[0]), ("position", p), ("normal", n), ("uv", uv)):
+            if not (cmd["imm"] & 0x8000):
+                raise PsgError(f"{label} UNPACK does not use FLG=1")
+            if cmd["imm"] & 0x4000:
+                raise PsgError(f"{label} UNPACK unexpectedly uses unsigned expansion")
+
         color = batch[4] if len(batch) == 6 else None
         if color and (color["base"] != 0x6E or color["num"] != count):
             raise PsgError("color-like stream mismatch")
+        if color and ((color["imm"] & 0xC000) != 0xC000):
+            raise PsgError("V4-8 stream does not use the observed FLG=1, USN=1 form")
 
         base_vertex = len(vertices)
         tags = []
@@ -182,7 +193,7 @@ def decode_packet(packet: bytes, objects, scales, origin, material, lod, block):
             normals.append([nx*normal_scale, ny*normal_scale, nz*normal_scale])
             u,v = struct.unpack_from("<2h", uv["data"], i * 4)
             uvs.append([u*uv_u, v*uv_v])
-            colors.append(list(struct.unpack_from("<4b", color["data"], i*4)) if color else None)
+            colors.append(list(struct.unpack_from("<4B", color["data"], i*4)) if color else None)
 
         run_start = None
         active_object = None

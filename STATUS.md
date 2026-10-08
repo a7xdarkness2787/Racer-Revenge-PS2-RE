@@ -38,6 +38,8 @@ The detailed canonical PSG payload sample now includes every PSG embedded in POD
 
 Recovered behavior includes the 0x24-byte render header, LOD groups and thresholds, material-block ownership, signed V4-16/V4-32 position decoding, hierarchy object ownership encoded in position W, ordinary triangle-strip reconstruction, strongly validated V3-8 normals, and multi-object remap tails.
 
+VIF control bits are now also validated across every sampled geometry batch: positions/normals/V2-16 use signed expansion, V4-8 uses unsigned expansion, and all geometry UNPACK ADDR fields are VIF1_TOPS-relative. Material-block bit `0x8` tracks V4-8 presence in 1,216/1,216 blocks.
+
 All 865 single-object sample PSGs reproduce their fixed bounds within one position quantization unit.
 
 Six POD01 render components also match corresponding type-0 COL bounds to floating-point precision, independently validating the render coordinate recovery.
@@ -57,7 +59,7 @@ Detailed PSG render-payload statistics currently cover the 881-file POD01/TA/TB 
 ## Highest-priority unknowns
 
 - VU microprogram and GIF/GS output
-- material-block flag and metric semantics
+- remaining material-block flag bits and metric semantics
 - exact LOD runtime selection metric
 - direct texture proof for V2-16 and channel meaning for V4-8
 - CableShadow special geometry path
