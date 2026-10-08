@@ -2,30 +2,28 @@
 
 ## Active investigation
 
-Continue decoding PSG render payloads now that the first PS2 VIF block is verified, then connect draw batches to hierarchy objects, materials and collision geometry.
+Turn the newly verified PSG VIF batch layout into independently reconstructed geometry and identify the VU/material path.
 
 ## Latest development
 
-A canonical sample of **881 PSG files** from POD01, TA and TB now has a verified first post-table render block:
+The 881-file POD01/TA/TB PSG sample contains **12,356 MSCNT-terminated VIF geometry batches**.
+
+Each batch begins with a single V4-32 upload to VU address 0 whose four words are:
 
 ```text
-0x40-byte descriptor
-VIF packet
+0x8000 | N
+0x30024000
+0x00000412
+0x00000000
 ```
 
-Descriptor `+0x3c` is the byte size of the following first VIF packet.
+`N` exactly matches the following element count.
 
-Every sampled first packet:
+All 12,356 batches then lay their per-element streams contiguously in VU memory.
 
-- is 16-byte aligned and in bounds;
-- begins with `0x6c018000`;
-- can be walked command-by-command with the current VIF decoder.
+Most use V4-16 positions; 106 batches use V4-32 positions. Every batch also carries V3-8 and V2-16 streams, and 11,710 carry an additional V4-8 stream.
 
-Observed command families are V4-32, V4-16, V3-8, V2-16 and V4-8 UNPACK plus MSCNT and NOP/padding.
-
-Executable code at `0x00246a58..0x00246a9c` independently constructs VIF data using the same `0x6c018000` command constant.
-
-The generic surface loader calls the PS2-specific packet helper `0x00246300` from `0x0026e34c`.
+The position/normal/UV/color semantic mapping is currently inferred from stream shape and layout rather than promoted as final fact.
 
 ## Current evidence
 
@@ -37,14 +35,13 @@ The generic surface loader calls the PS2-specific packet helper `0x00246300` fro
 
 ## Immediate queue
 
-- identify the remaining 0x40 descriptor fields;
-- parse the additional structures in the 194 sampled PSGs that continue after the first packet;
-- map VIF UNPACK destinations to VU memory;
-- locate material indices around batch boundaries;
-- identify the VU microprogram and GIF/GS submission path;
-- correlate one POD01 render object with its corresponding COL resource;
-- decode the s16 collision vertex dequantization path;
-- begin a retained PCSX2 runtime capture once draw-object addresses are stable.
+- derive V4-16 position dequantization and compare against V4-32 batches;
+- determine primitive topology;
+- calculate decoded bounds and compare with PSG descriptor/COL bounds;
+- identify material selection around MSCNT boundaries;
+- locate the VU microprogram reached by the geometry batches;
+- decode later records in the 194 sampled PSGs that continue beyond the first packet;
+- start runtime capture after a stable geometry object can be reconstructed.
 
 ## Documentation contract
 

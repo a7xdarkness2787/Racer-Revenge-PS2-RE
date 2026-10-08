@@ -4,38 +4,56 @@ c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30
 Private RES sample:
 PODS/POD01/POD01.RES  08b4d7655cb796da8a29d9b9a5318c0364561c659794ac9de6c9dfed7416eca3
 TRACKS/TA.RES          b491e34bf6cbd27869d5b9dc8db394b101ebaf4ac7f5e0d44fcca33a00d41ab8
-TRACKS/TB.RES          1188206d7b1f64910c119192829fc357b9d4a9f021d64e8a2b7561f2c113a09b
+TRACKS/TB.RES          1188206d7b1f64910c119192829fc357b9d4a9f021d64e8a2b7561f2c113a09b8
 
-PSG resources inspected from those containers: 881
+PSG resources inspected: 881
 
 First payload descriptor:
 size: 0x40
-u32 at +0x3c: first VIF packet byte size
-packet size alignment failures: 0
-packet boundary failures: 0
+u32 +0x3c: first VIF packet byte size
+alignment failures: 0
+boundary failures: 0
 
 First VIF word:
 0x6c018000 in 881 / 881 files
 
-First packet bounded VIF decoder:
+First packet decode:
 successful: 881
 unknown command failures: 0
 packet overrun failures: 0
 
-Observed first-packet command counts:
-0x6c  12462
-0x6d  12250
-0x6a  12356
-0x65  12356
-0x6e  11710
-0x17  12356
-0x00   1193
+MSCNT-terminated batches: 12,356
+sum of batch N values: 164,585
+N range: 3..16
 
-Payload after the first descriptor+packet:
+Per-batch 16-byte header payload:
+word 0 = 0x8000 | N    : 12,356 / 12,356
+word 1 = 0x30024000    : 12,356 / 12,356
+word 2 = 0x00000412    : 12,356 / 12,356
+word 3 = 0x00000000    : 12,356 / 12,356
+
+Batch grammars:
+11,710  6c,6d,6a,65,6e,17
+   540  6c,6d,6a,65,17
+   106  6c,6c,6a,65,17
+
+VU destination contiguity:
+12,356 / 12,356 batches
+
+Observed command counts:
+0x6c  12,462
+0x6d  12,250
+0x6a  12,356
+0x65  12,356
+0x6e  11,710
+0x17  12,356
+0x00   1,193
+
+Payload after first descriptor+packet:
 687 files: 0 bytes
 7 files: 16 bytes
-187 files: more than 16 bytes
+187 files: >16 bytes
 
 Executable anchors:
 0x0026e34c calls 0x00246300
-0x00246a58..0x00246a9c builds VIF data including 0x6c018000
+0x00246a58..0x00246a9c constructs VIF data including 0x6c018000

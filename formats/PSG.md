@@ -1,6 +1,6 @@
 # PS2 surface geometry (.psg)
 
-Status: **VERIFIED for the fixed tables and first VIF payload block**. Later multi-block payload structures remain under investigation.
+Status: **VERIFIED for the fixed tables and first VIF geometry block**. Later multi-block structures and final rendering semantics remain under investigation.
 
 The complete recovered retail corpus contains **9,917** embedded `.psg` resources. All 9,917 pass the fixed-table parser.
 
@@ -32,9 +32,7 @@ u32   parent_index
 
 The executable reads those fields in exactly 0x80, 0x40, 0x0c, 0x0c, 0x04 and 0x04 byte pieces.
 
-`0xffffffff` is the no-parent/root value. Every retail PSG has exactly one root; non-root parents are in range, refer to earlier descriptors, and form an acyclic hierarchy. Maximum observed depth is 7.
-
-The two vec3 fields and following float are structurally verified but their final culling/bounds names remain inferred pending runtime confirmation.
+`0xffffffff` is the no-parent/root value. Every retail PSG has exactly one root; non-root parents are in range, refer to earlier descriptors, and form an acyclic hierarchy.
 
 ## Material-name table
 
@@ -45,12 +43,7 @@ u32 material_count
 char material_name[material_count][0x40]
 ```
 
-Complete-corpus totals:
-
-- material-name records: **22,175**
-- material count per PSG: 1..15
-
-Names are ASCII, NUL-terminated and zero-padded.
+Complete-corpus total: **22,175** material-name records.
 
 ## Fixed-table payload boundary
 
@@ -62,88 +55,99 @@ payload_offset =
   + material_count * 0x40
 ```
 
-All 9,917 files contain data after this point.
+## First PS2 geometry block
 
-## First PS2 render block
+The current detailed payload sample contains all **881 PSG resources** from canonical POD01, TA and TB containers.
 
-A focused sample consisting of every PSG embedded in canonical `POD01.RES`, `TA.RES` and `TB.RES` contains **881 PSG files**.
-
-Every one begins its post-table payload with:
+Every one begins:
 
 ```text
-+0x00  descriptor[0x40]
-+0x40  VIF packet
+descriptor[0x40]
+vif_packet[descriptor.u32_3c]
 ```
 
-Within this first descriptor:
+Descriptor `+0x3c` is therefore verified as the first VIF packet byte size.
 
-| Offset | Size | Verified meaning |
-| --- | ---: | --- |
-| `+0x3c` | 4 | byte size of the following first VIF packet |
+The packet is 16-byte aligned and in-bounds in all 881 sampled files.
 
-The declared packet size is 16-byte aligned and in-bounds in all 881 files.
+## VIF batch contract
 
-For this sample:
+The first packet set contains **12,356 MSCNT-terminated batches**.
 
-- 687 files end exactly after the first 0x40-byte descriptor and its VIF packet;
-- 7 contain a further 16 bytes;
-- 187 contain larger additional structures.
-
-The other 0x40 descriptor fields are deliberately not assigned semantic names yet.
-
-## VIF stream
-
-The first VIF word in all 881 sampled PSG files is:
-
-`0x6c018000`
-
-The current bounded VIF parser consumes all 881 first packets without an unknown command or size overrun.
-
-Only these command bytes occur in the sampled first packets:
-
-- `0x6c` — UNPACK V4-32
-- `0x6d` — UNPACK V4-16
-- `0x6a` — UNPACK V3-8
-- `0x65` — UNPACK V2-16
-- `0x6e` — UNPACK V4-8
-- `0x17` — MSCNT
-- `0x00` — NOP/padding
-
-A common batch sequence is:
+Every batch starts with:
 
 ```text
-UNPACK V4-32
-UNPACK V4-16
-UNPACK V3-8
-UNPACK V2-16
-UNPACK V4-8
-MSCNT
+UNPACK V4-32, NUM=1, VU destination 0
+
+payload:
+    u32 0x8000 | N
+    u32 0x30024000
+    u32 0x00000412
+    u32 0x00000000
 ```
 
-This is a recurring pattern, not a claim that every batch has every command.
+`N` is the count used by the following per-element stream and ranges from 3 to 16.
+
+The low 15 bits of the first payload word equal `N` in all 12,356 sampled batches.
+
+### Batch variants
+
+| Count | Position source | Second stream | Third stream | Optional fourth | Terminator |
+| ---: | --- | --- | --- | --- | --- |
+| 11,710 | V4-16 | V3-8 | V2-16 | V4-8 | MSCNT |
+| 540 | V4-16 | V3-8 | V2-16 | none | MSCNT |
+| 106 | V4-32 | V3-8 | V2-16 | none | MSCNT |
+
+For every batch, VU destinations are contiguous:
+
+```text
+header      -> 0
+positions   -> 1
+stream 2    -> 1 + N
+stream 3    -> 1 + 2N
+stream 4    -> 1 + 3N    // when present
+```
+
+This layout is **VERIFIED**.
+
+The likely semantic mapping is currently **INFERRED** as:
+
+- V4 position stream;
+- V3 byte normal stream;
+- V2 16-bit texture-coordinate stream;
+- optional V4 byte color stream.
+
+Those semantic names will be promoted only after independent geometry/runtime validation.
 
 ## Executable agreement
 
-The PS2 surface-geometry implementation contains `PSXSurfaceGeometry` type metadata.
+The executable contains `PSXSurfaceGeometry` type metadata.
 
-At `0x00246a58..0x00246a9c`, executable code constructs VIF data and emits the same `0x6c018000` command constant seen at the beginning of all 881 sampled first packets.
-
-The generic SurfaceGeometry load path also calls the PS2 packet helper `0x00246300` from `0x0026e34c`.
+- `0x0026e34c` calls PS2-specific packet helper `0x00246300`
+- `0x00246a58..0x00246a9c` constructs VIF data using the same `0x6c018000` base word observed at every sampled first packet
 
 See `executable/psx_surface_geometry.md`.
 
-## What remains open
+## Remaining payload
 
-- semantic names for the remaining 0x40 descriptor fields;
-- later payload record layouts in the 194 sampled files that continue after the first packet;
-- hierarchy-object ownership of draw packets;
-- material indices per draw batch;
-- UNPACK destination semantics in VU memory;
-- VU microprogram identity;
-- GIF/GS state and submission behavior;
-- independent mesh reconstruction.
+After the first descriptor + VIF packet in the 881-file sample:
 
-Use:
+- 687 files end;
+- 7 contain exactly 16 bytes more;
+- 187 contain larger additional structures.
 
-- `scripts/psg_inspect.py` for fixed-table validation;
-- `scripts/psg_vif_inspect.py` for the first VIF payload block.
+Those later records are still open.
+
+## Open questions
+
+- remaining fields in the 0x40 descriptor;
+- position dequantization/scaling for V4-16 data;
+- primitive topology;
+- hierarchy-object ownership of batches;
+- material selection;
+- exact normal/UV/color scaling;
+- VU microprogram behavior;
+- GIF/GS submission;
+- later multi-block payload structures.
+
+Use `scripts/psg_inspect.py` for fixed tables and `scripts/psg_vif_inspect.py` for the first VIF block.

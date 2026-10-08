@@ -3,83 +3,132 @@
 **Canonical executable:** `SLUS_202.68`  
 **SHA-256:** `c1f1b63eb422b624189e68eb0140b318455e341d73182703017298fea6ce6c30`  
 **Status:** VERIFIED sample structure / OBSERVED executable linkage  
-**Confidence:** high for the first payload block; medium for higher-level mesh semantics
+**Confidence:** high for the first payload block and batch grammar; medium for higher-level mesh semantics
 
 ## Question
 
-What begins immediately after the already verified PSG hierarchy/material tables, and is the remaining data genuinely PlayStation 2 VIF command data rather than an ordinary PC-style vertex/index stream?
+What begins immediately after the verified PSG hierarchy/material tables, and how is the geometry staged into PS2 VIF/VU memory?
 
 ## Private inputs
 
-The investigation used canonical retail files kept outside Git:
+Canonical retail files kept outside Git:
 
-- `PODS/POD01/POD01.RES`
-  - SHA-256 `08b4d7655cb796da8a29d9b9a5318c0364561c659794ac9de6c9dfed7416eca3`
-- `TRACKS/TA.RES`
-  - SHA-256 `b491e34bf6cbd27869d5b9dc8db394b101ebaf4ac7f5e0d44fcca33a00d41ab8`
-- `TRACKS/TB.RES`
-  - SHA-256 `1188206d7b1f64910c119192829fc357b9d4a9f021d64e8a2b7561f2c113a09b`
-- `SLUS_202.68`
-  - canonical hash above
+- `PODS/POD01/POD01.RES` — `08b4d7655cb796da8a29d9b9a5318c0364561c659794ac9de6c9dfed7416eca3`
+- `TRACKS/TA.RES` — `b491e34bf6cbd27869d5b9dc8db394b101ebaf4ac7f5e0d44fcca33a00d41ab8`
+- `TRACKS/TB.RES` — `1188206d7b1f64910c119192829fc357b9d4a9f021d64e8a2b7561f2c113a09b8`
+- `SLUS_202.68` — canonical executable hash above
 
-Those three RES containers expose **881 PSG resources** in the current sample.
+The three RES containers expose **881 PSG resources**.
 
 ## VERIFIED — first payload block
 
-For every one of the 881 sampled PSG resources, the first bytes after the fixed hierarchy/material region obey the same outer rule:
+Every sampled PSG begins its post-table payload with:
 
 ```text
-+0x00  0x40-byte descriptor
++0x00  descriptor[0x40]
 +0x40  VIF packet
 ```
 
-Within the 0x40-byte descriptor:
+Descriptor `+0x3c` is the byte size of the following VIF packet.
+
+All 881 packet sizes are:
+
+- nonzero;
+- 16-byte aligned;
+- fully in bounds.
+
+After the first descriptor + packet:
+
+- 687 PSGs end exactly;
+- 7 have exactly 16 additional bytes;
+- 187 contain larger additional structures.
+
+Those later structures are still open.
+
+## VERIFIED — first VIF command
+
+All 881 first packets begin with:
+
+`0x6c018000`
+
+Using the standard VIFcode layout this is an UNPACK V4-32 command with NUM=1 and immediate/address field `0x8000`.
+
+Executable code at `0x00246a58..0x00246a9c` independently constructs VIF data using the same `0x6c018000` base constant.
+
+## VERIFIED — batch grammar
+
+The first packets contain **12,356 MSCNT-terminated batches**.
+
+The 16-byte payload of the first V4-32 UNPACK in every batch is:
 
 ```text
-+0x3c  u32 vif_packet_size
+u32 0x8000 | N
+u32 0x30024000
+u32 0x00000412
+u32 0x00000000
 ```
 
-The packet size is 16-byte aligned and places the packet end inside the PSG resource in all 881 files.
+where `N` exactly equals the element count of the following position UNPACK.
 
-File behavior in this three-container sample:
+Across all 12,356 batches:
 
-- 687 PSG files end exactly at the end of this first descriptor + VIF packet
-- 7 have exactly 16 bytes after it
-- 187 contain additional payload structures after it
+- `N` ranges from 3 to 16;
+- the sum of batch element counts is 164,585;
+- the low 15 bits of the first header word equal `N` in 12,356 / 12,356 cases.
 
-The additional structures are not yet assigned stable semantics.
+Three batch forms occur:
 
-## VERIFIED — VIF command stream
+### Compressed positions + color
 
-The first u32 at the start of every sampled VIF packet is:
+**11,710 batches**
 
 ```text
-0x6c018000
+UNPACK V4-32  count 1   -> VU addr 0
+UNPACK V4-16  count N   -> VU addr 1
+UNPACK V3-8   count N   -> VU addr 1 + N
+UNPACK V2-16  count N   -> VU addr 1 + 2N
+UNPACK V4-8   count N   -> VU addr 1 + 3N
+MSCNT
 ```
 
-Using the standard PS2 VIFcode field layout this is an UNPACK-family command with:
+### Compressed positions without color
 
-- command byte `0x6c`
-- NUM `1`
-- immediate `0x8000`
+**540 batches**
 
-The next command after its 16-byte source payload is always another UNPACK command from the same observed geometry sequence.
+```text
+UNPACK V4-32  count 1   -> VU addr 0
+UNPACK V4-16  count N   -> VU addr 1
+UNPACK V3-8   count N   -> VU addr 1 + N
+UNPACK V2-16  count N   -> VU addr 1 + 2N
+MSCNT
+```
 
-A bounded decoder consumed every first VIF packet in all 881 sampled PSGs without encountering an unknown command or overrunning the descriptor-declared packet size.
+### 32-bit positions without color
 
-Observed command bytes across those first packets are limited to:
+**106 batches**
 
-| Command | Current interpretation |
-| ---: | --- |
-| `0x00` | NOP/padding |
-| `0x17` | MSCNT |
-| `0x65` | UNPACK V2-16 |
-| `0x6a` | UNPACK V3-8 |
-| `0x6c` | UNPACK V4-32 |
-| `0x6d` | UNPACK V4-16 |
-| `0x6e` | UNPACK V4-8 |
+```text
+UNPACK V4-32  count 1   -> VU addr 0
+UNPACK V4-32  count N   -> VU addr 1
+UNPACK V3-8   count N   -> VU addr 1 + N
+UNPACK V2-16  count N   -> VU addr 1 + 2N
+MSCNT
+```
 
-Observed command counts in the 881 first packets:
+The UNPACK destinations are contiguous for **12,356 / 12,356** batches under the one-VU-vector-per-element interpretation.
+
+That strongly supports the current attribute interpretation:
+
+- first per-element stream: position-like data;
+- second: 3-component byte data, consistent with normal-like data;
+- third: 2-component 16-bit data, consistent with UV-like data;
+- optional fourth: 4-component byte data, consistent with color-like data.
+
+The serialized widths and destinations are verified. The semantic names remain **INFERRED** until they are checked against decoded geometry and runtime/VU behavior.
+
+## VERIFIED — command population
+
+Across the sampled first packets:
 
 - `0x6c`: 12,462
 - `0x6d`: 12,250
@@ -89,73 +138,39 @@ Observed command counts in the 881 first packets:
 - `0x17`: 12,356
 - `0x00`: 1,193
 
-A common draw-batch pattern is:
+No other VIF command byte is needed to consume the first packet set.
 
-```text
-UNPACK V4-32
-UNPACK V4-16
-UNPACK V3-8
-UNPACK V2-16
-UNPACK V4-8
-MSCNT
-```
+## OBSERVED — PSXSurfaceGeometry executable ownership
 
-Not every batch contains every UNPACK family, so this is a recurring pattern rather than a universal fixed record.
+The executable contains `PSXSurfaceGeometry` type metadata and a related virtual table around `0x003d20c0`.
 
-## VERIFIED — executable-side VIF construction
+The helper at `0x00246300` is called by the surface-geometry load family at `0x0026e34c` and performs file reads, alignment/allocation, and PS2 packet preparation.
 
-The executable contains a strong independent PS2 rendering anchor around `0x002469c0`.
-
-At `0x00246a58..0x00246a9c`, code writes a small VIF packet into memory. Among the emitted words is:
-
-```text
-0x6c018000 | value
-```
-
-followed by four floating-point words.
-
-The exact base constant `0x6c018000` is the same first VIF command found in all 881 sampled PSG first packets.
-
-This establishes a direct connection between the serialized PSG payload and the game's Emotion Engine/VIF-side geometry path.
-
-## OBSERVED — PSXSurfaceGeometry ownership
-
-The executable contains RTTI/type metadata for `PSXSurfaceGeometry`. A related table at approximately `0x003d20c0` points into the `0x00246260..` implementation family.
-
-The helper at `0x00246300` is called from the surface-geometry load path at `0x0026e34c` and performs file reads, allocation/alignment and PS2 packet preparation. Its full serialized-field contract is still being separated from surrounding higher-level geometry data.
+Generic LLVM output does not decode every R5900 instruction, so field semantics that depend on those instructions remain intentionally unnamed.
 
 ## Interpretation
 
-The PSG payload is now proven to contain executable VIF command streams. It should no longer be described merely as an unknown PS2-specific blob.
+This closes the question of whether the first PSG payload is opaque arbitrary geometry data: it is a structured VIF upload stream arranged in repeated VU-memory batches.
 
-What is **not** yet closed:
+It does **not** yet prove:
 
-- the semantic names of the other fields in the 0x40 descriptor;
-- how later payload structures relate to hierarchy objects;
-- exact vertex/normal/UV/color meaning of each UNPACK stream;
-- material assignment per draw batch;
-- VU microprogram identity and expected VU memory layout;
-- GIF/GS state generated after MSCNT;
-- the meaning of the extra 16-byte tails seen in seven sampled PSGs.
+- primitive topology;
+- whether the V4 position component is always homogeneous W or another packed field;
+- exact normal/UV/color scaling;
+- material selection per batch;
+- VU microprogram behavior;
+- GIF/GS state emitted after MSCNT;
+- ownership of later payload structures.
 
 ## Reproduction
 
-Use `scripts/psg_vif_inspect.py` on a user-supplied extracted PSG resource.
-
-The script:
-
-1. verifies the existing fixed PSG tables;
-2. locates the first payload descriptor;
-3. validates the descriptor's packet size;
-4. walks the first VIF packet command-by-command;
-5. reports source-byte lengths and remaining payload.
-
-No retail PSG payload is stored in Git.
+Use `scripts/psg_vif_inspect.py` on user-supplied PSG resources. The raw aggregate sample result is retained in `raw/2026-10-07-psg-vif-summary.txt`.
 
 ## Next
 
-- identify the remaining 0x40 descriptor fields by correlating them against command counts and executable reads;
-- split the 187 multi-block sample files into their additional serialized records;
-- map UNPACK destinations to VU memory usage;
-- identify material indices around batch boundaries;
-- correlate one POD01 render object with its matching COL bounds.
+- decode position scaling for V4-16 batches and compare against V4-32 cases;
+- identify primitive topology from batch ordering/output;
+- correlate PSG vertex bounds with a matching POD01 COL object;
+- locate material selection around each MSCNT batch;
+- identify the VU microprogram reached by MSCNT;
+- split the later payload structures in the 194 nontrivial sample files.
