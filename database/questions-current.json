@@ -6,17 +6,24 @@
       "id": "PSG-PAYLOAD-001",
       "priority": "highest",
       "subsystem": "renderer/geometry",
-      "status": "OPEN",
-      "question": "What is the first record structure after the verified PSG hierarchy and material tables, and how are records assigned to hierarchy objects?",
-      "evidence": ["formats/PSG.md", "executable/surface_geometry_loader.md"]
+      "status": "PARTIAL",
+      "question": "What are the remaining fields in the verified 0x40 first PSG payload descriptor, and what structures follow the first VIF packet in multi-block PSG files?",
+      "evidence": [
+        "formats/PSG.md",
+        "analysis/2026-10-07-psg-vif-payload.md",
+        "scripts/psg_vif_inspect.py"
+      ]
     },
     {
       "id": "PSG-PS2-001",
       "priority": "highest",
       "subsystem": "renderer/PS2",
-      "status": "OPEN",
-      "question": "Where are VIF, VU, GIF and DMA packet boundaries in the PSG payload, and how do material references feed the submission path?",
-      "evidence": ["formats/PSG.md", "EXECUTABLE_MAP.md"]
+      "status": "PARTIAL",
+      "question": "How do the verified VIF UNPACK streams map to VU memory, materials, microprogram execution and GIF/GS submission?",
+      "evidence": [
+        "analysis/2026-10-07-psg-vif-payload.md",
+        "executable/psx_surface_geometry.md"
+      ]
     },
     {
       "id": "COL-S16-001",

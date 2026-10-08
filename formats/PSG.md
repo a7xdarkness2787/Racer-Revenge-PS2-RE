@@ -1,8 +1,8 @@
-# PS2 surface geometry header (.psg)
+# PS2 surface geometry (.psg)
 
-Status: **VERIFIED for the fixed header tables** in the North American retail corpus. The variable geometry command payload is still under investigation.
+Status: **VERIFIED for the fixed tables and first VIF payload block**. Later multi-block payload structures remain under investigation.
 
-The recovered RES corpus contains **9,917** embedded `.psg` resources. All 9,917 pass the current fixed-table parser.
+The complete recovered retail corpus contains **9,917** embedded `.psg` resources. All 9,917 pass the fixed-table parser.
 
 ## Common header
 
@@ -12,18 +12,14 @@ u32  version     // 3
 u32  object_count
 ```
 
-Observed across the complete corpus:
+Complete-corpus totals:
 
-- tag `psg\0`: 9,917 / 9,917
-- version 3: 9,917 / 9,917
-- object count range: 1..33
-- total object descriptors: **17,942**
+- object descriptors: **17,942**
+- object count per PSG: 1..33
 
 ## Object descriptor
 
-Immediately after the 12-byte header are `object_count` fixed-size records.
-
-Serialized stride: **0xe0 bytes**.
+Immediately after the 12-byte header are `object_count` records of **0xe0 bytes**:
 
 ```text
 char  name[0x80]
@@ -34,68 +30,29 @@ float radius_like
 u32   parent_index
 ```
 
-The executable reads the descriptor in exactly those pieces: 0x80, 0x40, 0x0c, 0x0c, 0x04 and 0x04 bytes.
+The executable reads those fields in exactly 0x80, 0x40, 0x0c, 0x0c, 0x04 and 0x04 byte pieces.
 
-### Name
+`0xffffffff` is the no-parent/root value. Every retail PSG has exactly one root; non-root parents are in range, refer to earlier descriptors, and form an acyclic hierarchy. Maximum observed depth is 7.
 
-The 0x80-byte object name is ASCII, NUL-terminated and zero-padded in every retail descriptor.
-
-Longest observed name: 26 characters.
-
-### Matrix
-
-Every descriptor contains an affine 4x4 matrix in the observed storage convention. The positions corresponding to the non-translation final row/column are consistently zero with the homogeneous term equal to 1.0.
-
-The matrix often carries local translation and may also carry scale/rotation.
-
-### Bounds fields
-
-The two vec3 fields and following float behave like object-bound data:
-
-- the second vec3 is non-negative throughout the corpus and behaves like half-extents
-- the final float is non-negative and radius-like
-- the first vec3 behaves like a local bound center
-
-The executable stores these values in the RenderableObject-family runtime object at stable offsets documented in `../executable/surface_geometry_loader.md`.
-
-The serialization of these fields is verified. Their exact renderer/culling semantics remain marked as inferred until runtime checks are retained.
-
-### Parent index
-
-`0xffffffff` means no parent.
-
-All 9,917 PSG files have exactly **one** root descriptor. Every other parent index refers to an earlier descriptor in the same file. No cycles or out-of-range parents occur.
-
-Across the corpus:
-
-- roots: 9,917
-- non-root parent links: 8,025
-- maximum observed hierarchy depth: 7
-
-The executable uses this field to build parent/child/sibling links after reading the descriptor table.
+The two vec3 fields and following float are structurally verified but their final culling/bounds names remain inferred pending runtime confirmation.
 
 ## Material-name table
 
-Immediately after the object descriptors:
+After the object descriptors:
 
 ```text
 u32 material_count
 char material_name[material_count][0x40]
 ```
 
-Every material name is ASCII, NUL-terminated and zero-padded.
+Complete-corpus totals:
 
-Corpus totals:
-
-- material count per PSG: 1..15
 - material-name records: **22,175**
-- longest observed material name: 25 characters
+- material count per PSG: 1..15
 
-The executable resolves these names against its material table. A diagnostic in the same subsystem reads `%s is not in the material table`.
+Names are ASCII, NUL-terminated and zero-padded.
 
-## Payload boundary
-
-The fixed-table end is therefore:
+## Fixed-table payload boundary
 
 ```text
 payload_offset =
@@ -105,16 +62,88 @@ payload_offset =
   + material_count * 0x40
 ```
 
-All 9,917 files have additional payload after this point.
+All 9,917 files contain data after this point.
 
-Observed payload sizes range from 160 to 264,432 bytes, totaling 113,595,080 bytes across the retail PSG corpus.
+## First PS2 render block
 
-The payload contains the PS2-specific geometry/render stream and is the next part of the format being decoded. It should not yet be described as a simple vertex/index buffer.
+A focused sample consisting of every PSG embedded in canonical `POD01.RES`, `TA.RES` and `TB.RES` contains **881 PSG files**.
 
-## Example hierarchy behavior
+Every one begins its post-table payload with:
 
-Pod and track PSG files show ordinary parented object trees. Child descriptors can represent named parts such as body pieces, arms, cables, damage objects and other transformable subobjects.
+```text
++0x00  descriptor[0x40]
++0x40  VIF packet
+```
 
-This makes the PSG hierarchy directly useful for correlating visible geometry with pod damage/animation structures and matching COL resources.
+Within this first descriptor:
 
-Use `scripts/psg_inspect.py` for the fixed header/table validation.
+| Offset | Size | Verified meaning |
+| --- | ---: | --- |
+| `+0x3c` | 4 | byte size of the following first VIF packet |
+
+The declared packet size is 16-byte aligned and in-bounds in all 881 files.
+
+For this sample:
+
+- 687 files end exactly after the first 0x40-byte descriptor and its VIF packet;
+- 7 contain a further 16 bytes;
+- 187 contain larger additional structures.
+
+The other 0x40 descriptor fields are deliberately not assigned semantic names yet.
+
+## VIF stream
+
+The first VIF word in all 881 sampled PSG files is:
+
+`0x6c018000`
+
+The current bounded VIF parser consumes all 881 first packets without an unknown command or size overrun.
+
+Only these command bytes occur in the sampled first packets:
+
+- `0x6c` — UNPACK V4-32
+- `0x6d` — UNPACK V4-16
+- `0x6a` — UNPACK V3-8
+- `0x65` — UNPACK V2-16
+- `0x6e` — UNPACK V4-8
+- `0x17` — MSCNT
+- `0x00` — NOP/padding
+
+A common batch sequence is:
+
+```text
+UNPACK V4-32
+UNPACK V4-16
+UNPACK V3-8
+UNPACK V2-16
+UNPACK V4-8
+MSCNT
+```
+
+This is a recurring pattern, not a claim that every batch has every command.
+
+## Executable agreement
+
+The PS2 surface-geometry implementation contains `PSXSurfaceGeometry` type metadata.
+
+At `0x00246a58..0x00246a9c`, executable code constructs VIF data and emits the same `0x6c018000` command constant seen at the beginning of all 881 sampled first packets.
+
+The generic SurfaceGeometry load path also calls the PS2 packet helper `0x00246300` from `0x0026e34c`.
+
+See `executable/psx_surface_geometry.md`.
+
+## What remains open
+
+- semantic names for the remaining 0x40 descriptor fields;
+- later payload record layouts in the 194 sampled files that continue after the first packet;
+- hierarchy-object ownership of draw packets;
+- material indices per draw batch;
+- UNPACK destination semantics in VU memory;
+- VU microprogram identity;
+- GIF/GS state and submission behavior;
+- independent mesh reconstruction.
+
+Use:
+
+- `scripts/psg_inspect.py` for fixed-table validation;
+- `scripts/psg_vif_inspect.py` for the first VIF payload block.
